@@ -90,12 +90,20 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
   </div>
   <div class="field">
     <label>ナンバープレート</label>
-    <div class="camera-area" onclick="document.getElementById('camera-input').click()">
-      <span class="camera-icon">📷</span>
-      <div class="camera-label">カメラで撮影する</div>
-      <div class="camera-hint">タップしてカメラを起動</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div class="camera-area" style="margin-bottom:0" onclick="document.getElementById('camera-input').click()">
+        <span class="camera-icon">📷</span>
+        <div class="camera-label">カメラ撮影</div>
+        <div class="camera-hint">タップして起動</div>
+      </div>
+      <div class="camera-area" style="margin-bottom:0" onclick="document.getElementById('gallery-input').click()">
+        <span class="camera-icon">🖼️</span>
+        <div class="camera-label">写真から選ぶ</div>
+        <div class="camera-hint">フォルダーから選択</div>
+      </div>
     </div>
     <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+    <input type="file" id="gallery-input" accept="image/*" onchange="handlePhoto(this)">
     <div id="preview-wrap">
       <img id="plate-preview" src="" alt="プレート画像">
       <div class="ocr-loading" id="ocr-loading">🔍 ナンバーを読み取り中…</div>
