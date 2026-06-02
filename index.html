@@ -16,7 +16,7 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .field input{width:100%;padding:14px 16px;font-size:20px;border:2px solid #ccc;border-radius:10px;background:#fff;color:#222}
 .field input:focus{outline:none;border-color:#1a56a0}
 .field .hint{font-size:13px;color:#888;margin-top:4px}
-.camera-area{border:2px dashed #aaa;border-radius:12px;background:#fafafa;padding:20px;text-align:center;cursor:pointer;margin-bottom:18px}
+.camera-area{border:2px dashed #aaa;border-radius:12px;background:#fafafa;padding:20px;text-align:center;cursor:pointer;margin-bottom:10px}
 .camera-area:hover{border-color:#1a56a0;background:#f0f4ff}
 .camera-icon{font-size:48px;margin-bottom:8px;display:block}
 .camera-label{font-size:18px;font-weight:700;color:#1a56a0}
@@ -29,8 +29,6 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .ocr-loading{display:none;padding:10px;text-align:center;color:#666;font-size:15px}
 .btn-primary{width:100%;padding:20px;font-size:22px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px;letter-spacing:1px}
 .btn-primary:active{background:#144080;transform:scale(0.98)}
-.btn-danger{padding:10px 18px;font-size:16px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer}
-.btn-success{padding:10px 18px;font-size:16px;font-weight:700;background:#27ae60;color:#fff;border:none;border-radius:8px;cursor:pointer}
 #success-msg{display:none;background:#d4edda;border:1px solid #27ae60;border-radius:10px;padding:16px;margin-top:16px;text-align:center;font-size:18px;color:#1a5c2e;font-weight:700}
 .list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .list-header h2{font-size:18px;font-weight:700}
@@ -39,16 +37,35 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .stat-card{background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid #e0e0e0}
 .stat-num{font-size:26px;font-weight:700;color:#1a56a0}
 .stat-label{font-size:12px;color:#888;margin-top:2px}
-.table-wrap{overflow-x:auto;background:#fff;border-radius:12px;border:1px solid #e0e0e0}
-table{width:100%;border-collapse:collapse;min-width:560px}
-th{background:#1a56a0;color:#fff;padding:12px 10px;text-align:left;font-size:14px;font-weight:700;white-space:nowrap}
-td{padding:12px 10px;border-bottom:1px solid #f0f0f0;font-size:14px;vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr:hover td{background:#f8f8f8}
-.badge-out{background:#f0f0f0;color:#555;padding:3px 10px;border-radius:20px;font-size:12px;white-space:nowrap}
-.empty-state{text-align:center;padding:48px 20px;color:#aaa;font-size:16px}
+.record-list{display:flex;flex-direction:column;gap:10px}
+.record-card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;padding:14px 16px;cursor:pointer;transition:box-shadow .15s}
+.record-card:active{box-shadow:0 0 0 2px #1a56a0}
+.record-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.record-name{font-size:18px;font-weight:700}
 .plate-num{font-size:18px;font-weight:700;color:#1a56a0;font-family:monospace;letter-spacing:2px}
+.record-card-mid{font-size:14px;color:#555;margin-bottom:8px}
+.record-card-bot{display:flex;justify-content:space-between;align-items:center}
+.time-info{font-size:13px;color:#888}
+.badge-in{background:#d4edda;color:#1a5c2e;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700}
+.badge-out{background:#f0f0f0;color:#555;padding:4px 12px;border-radius:20px;font-size:13px}
+.btn-checkout{padding:8px 16px;font-size:15px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer}
+.empty-state{text-align:center;padding:48px 20px;color:#aaa;font-size:16px}
 .save-badge{background:#e8f5e9;border:1px solid #27ae60;border-radius:8px;padding:8px 14px;font-size:13px;color:#1a5c2e;margin-bottom:16px;display:flex;align-items:center;gap:6px}
+
+/* モーダル */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:#888;padding:0 4px}
+.modal-field{margin-bottom:14px}
+.modal-field label{display:block;font-size:14px;color:#666;margin-bottom:4px;font-weight:500}
+.modal-field input{width:100%;padding:12px 14px;font-size:18px;border:2px solid #ccc;border-radius:10px;background:#fff;color:#222}
+.modal-field input:focus{outline:none;border-color:#1a56a0}
+.modal-actions{display:flex;gap:10px;margin-top:18px}
+.btn-save{flex:2;padding:16px;font-size:18px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:10px;cursor:pointer}
+.btn-delete{flex:1;padding:16px;font-size:18px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:10px;cursor:pointer}
+
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:30px;font-size:15px;display:none;z-index:999;white-space:nowrap}
 </style>
 </head>
@@ -102,64 +119,77 @@ tr:hover td{background:#f8f8f8}
     <div class="stat-card"><div class="stat-num" id="stat-in" style="color:#27ae60">0</div><div class="stat-label">入庫中</div></div>
     <div class="stat-card"><div class="stat-num" id="stat-out" style="color:#888">0</div><div class="stat-label">出庫済み</div></div>
   </div>
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>入庫時刻</th>
-          <th>会社名・氏名</th>
-          <th>訪問先</th>
-          <th>ナンバー</th>
-          <th>出庫</th>
-        </tr>
-      </thead>
-      <tbody id="record-tbody"></tbody>
-    </table>
-    <div class="empty-state" id="empty-state">まだ記録がありません</div>
+  <div class="record-list" id="record-list"></div>
+  <div class="empty-state" id="empty-state">まだ記録がありません</div>
+</div>
+
+<!-- 編集モーダル -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-title">
+      <span>記録を編集</span>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-field">
+      <label>訪問者名（会社名）</label>
+      <input type="text" id="edit-name">
+    </div>
+    <div class="modal-field">
+      <label>訪問先</label>
+      <input type="text" id="edit-dest">
+    </div>
+    <div class="modal-field">
+      <label>ナンバー（数字のみ）</label>
+      <input type="text" id="edit-plate" inputmode="numeric" maxlength="4">
+    </div>
+    <div class="modal-field">
+      <label>入庫時刻（例：09:30）</label>
+      <input type="text" id="edit-intime" inputmode="numeric" maxlength="5">
+    </div>
+    <div class="modal-field">
+      <label>出庫時刻（例：10:45 ／ 未出庫は空欄）</label>
+      <input type="text" id="edit-outtime" inputmode="numeric" maxlength="5">
+    </div>
+    <div class="modal-actions">
+      <button class="btn-save" onclick="saveEdit()">保　存</button>
+      <button class="btn-delete" onclick="deleteRecord()">削　除</button>
+    </div>
   </div>
 </div>
 
 <script>
-const STORAGE_KEY = 'parking_records';
+const STORAGE_KEY='parking_records';
+let records=[];
+let editingId=null;
 
 function loadRecords(){
-  try{
-    const d = localStorage.getItem(STORAGE_KEY);
-    return d ? JSON.parse(d) : [];
-  }catch(e){ return []; }
+  try{const d=localStorage.getItem(STORAGE_KEY);return d?JSON.parse(d):[];}catch(e){return [];}
 }
-
-function saveRecords(records){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-  }catch(e){ toast('保存に失敗しました'); }
+function saveRecords(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(records));}catch(e){toast('保存に失敗しました');}
 }
-
-let records = loadRecords();
+records=loadRecords();
 
 function showView(v){
-  document.getElementById('entry-view').style.display = v==='entry'?'block':'none';
-  document.getElementById('list-view').style.display = v==='list'?'block':'none';
+  document.getElementById('entry-view').style.display=v==='entry'?'block':'none';
+  document.getElementById('list-view').style.display=v==='list'?'block':'none';
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(v==='entry'&&i===0)||(v==='list'&&i===1)));
-  if(v==='list') renderList();
+  if(v==='list')renderList();
 }
 
 function toast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg; t.style.display='block';
+  t.textContent=msg;t.style.display='block';
   setTimeout(()=>t.style.display='none',2500);
 }
 
 async function handlePhoto(inp){
-  const file=inp.files[0];
-  if(!file)return;
+  const file=inp.files[0];if(!file)return;
   const wrap=document.getElementById('preview-wrap');
   const img=document.getElementById('plate-preview');
   const loading=document.getElementById('ocr-loading');
   const result=document.getElementById('ocr-result');
-  wrap.style.display='block';
-  result.style.display='none';
-  loading.style.display='block';
+  wrap.style.display='block';result.style.display='none';loading.style.display='block';
   const reader=new FileReader();
   reader.onload=async e=>{
     img.src=e.target.result;
@@ -181,16 +211,12 @@ async function handlePhoto(inp){
 async function ocrPlate(b64){
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
-        max_tokens:100,
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,
         messages:[{role:'user',content:[
           {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
           {type:'text',text:'この画像はナンバープレートです。ナンバープレートの数字部分（・を除いた1〜4桁の数字のみ）を抽出してください。数字のみを返してください。数字が読み取れない場合は「不明」とだけ返してください。'}
-        ]}]
-      })
+        ]}]})
     });
     const data=await res.json();
     const text=(data.content&&data.content[0]&&data.content[0].text)||'';
@@ -219,7 +245,7 @@ function register(){
   if(!name){toast('訪問者名を入力してください');return;}
   if(!plate||!/^\d{1,4}$/.test(plate)){toast('ナンバーを1〜4桁の数字で入力してください');return;}
   records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name,dest,plate});
-  saveRecords(records);
+  saveRecords();
   document.getElementById('visitor-name').value='';
   document.getElementById('destination').value='';
   document.getElementById('plate-number').value='';
@@ -230,10 +256,59 @@ function register(){
   setTimeout(()=>msg.style.display='none',3000);
 }
 
-function checkout(id){
+function checkout(id,e){
+  e.stopPropagation();
   const r=records.find(r=>r.id===id);
-  if(r){ r.outTime=now(); saveRecords(records); }
+  if(r){r.outTime=now();saveRecords();}
   renderList();
+}
+
+function openEdit(id){
+  const r=records.find(r=>r.id===id);
+  if(!r)return;
+  editingId=id;
+  document.getElementById('edit-name').value=r.name;
+  document.getElementById('edit-dest').value=r.dest||'';
+  document.getElementById('edit-plate').value=r.plate;
+  document.getElementById('edit-intime').value=r.inTime;
+  document.getElementById('edit-outtime').value=r.outTime||'';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal(e){
+  if(e.target===document.getElementById('modal-overlay'))closeModalDirect();
+}
+function closeModalDirect(){
+  document.getElementById('modal-overlay').classList.remove('open');
+  editingId=null;
+}
+
+function saveEdit(){
+  const r=records.find(r=>r.id===editingId);
+  if(!r)return;
+  const name=document.getElementById('edit-name').value.trim();
+  const plate=document.getElementById('edit-plate').value.trim();
+  if(!name){toast('訪問者名を入力してください');return;}
+  if(!plate||!/^\d{1,4}$/.test(plate)){toast('ナンバーは1〜4桁の数字で入力してください');return;}
+  r.name=name;
+  r.dest=document.getElementById('edit-dest').value.trim();
+  r.plate=plate;
+  r.inTime=document.getElementById('edit-intime').value.trim();
+  const ot=document.getElementById('edit-outtime').value.trim();
+  r.outTime=ot||null;
+  saveRecords();
+  closeModalDirect();
+  renderList();
+  toast('修正しました');
+}
+
+function deleteRecord(){
+  if(!confirm('この記録を削除しますか？'))return;
+  records=records.filter(r=>r.id!==editingId);
+  saveRecords();
+  closeModalDirect();
+  renderList();
+  toast('削除しました');
 }
 
 function renderList(){
@@ -243,20 +318,41 @@ function renderList(){
   document.getElementById('stat-total').textContent=todays.length;
   document.getElementById('stat-in').textContent=todays.filter(r=>!r.outTime).length;
   document.getElementById('stat-out').textContent=todays.filter(r=>r.outTime).length;
-  const tbody=document.getElementById('record-tbody');
+  const list=document.getElementById('record-list');
   const empty=document.getElementById('empty-state');
-  if(!todays.length){tbody.innerHTML='';empty.style.display='block';return;}
+  if(!todays.length){list.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
-  tbody.innerHTML=todays.map(r=>`
-    <tr>
-      <td>${r.inTime}</td>
-      <td style="font-weight:600">${r.name}</td>
-      <td style="color:#555">${r.dest||'—'}</td>
-      <td><span class="plate-num">${r.plate}</span></td>
-      <td>${r.outTime
-        ?`<span class="badge-out">${r.outTime} 出庫</span>`
-        :`<button class="btn-danger" onclick="checkout(${r.id})">出庫</button>`}</td>
-    </tr>`).join('');
+  list.innerHTML=todays.map(r=>`
+    <div class="record-card" onclick="openEdit(${r.id})" ontouchend="openEdit(${r.id})" style="-webkit-tap-highlight-color:rgba(26,86,160,0.15);cursor:pointer">
+      <div class="record-card-top">
+        <span class="record-name">${r.name}</span>
+        <span class="plate-num">${r.plate}</span>
+      </div>
+      <div class="record-card-mid">訪問先：${r.dest||'—'}</div>
+      <div class="record-card-bot">
+        <span class="time-info">入庫 ${r.inTime}${r.outTime?' ／ 出庫 '+r.outTime:''}</span>
+        ${r.outTime
+          ?'<span class="badge-out">出庫済み</span>'
+          :`<button class="btn-checkout" onclick="event.stopPropagation();checkout(${r.id},event)" ontouchend="event.stopPropagation();checkout(${r.id},event)">出　庫</button>`}
+      </div>
+    </div>`).join('');
+}
+
+function downloadCSV(){
+  const td=today();
+  const todays=records.filter(r=>r.date===td);
+  if(!todays.length){toast('出力するデータがありません');return;}
+  const bom='\uFEFF';
+  const header='日付,入庫時刻,出庫時刻,訪問者名,訪問先,ナンバー\n';
+  const rows=todays.map(r=>[r.date,r.inTime,r.outTime||'','"'+r.name+'"','"'+(r.dest||'')+'"',r.plate].join(',')).join('\n');
+  const csv=bom+header+rows;
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='入出庫記録_'+td+'.csv';
+  document.body.appendChild(a);a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+  toast('CSVを保存しました');
 }
 
 renderList();
