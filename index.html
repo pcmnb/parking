@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>車両入出庫管理</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
+.tab-bar{display:flex;background:#1a56a0;position:sticky;top:0;z-index:100}
+.tab-btn{flex:1;padding:14px 8px;color:#fff;border:none;background:transparent;font-size:16px;cursor:pointer;border-bottom:3px solid transparent;font-weight:500}
+.tab-btn.active{border-bottom:3px solid #fff;background:rgba(255,255,255,0.15)}
+#entry-view{display:block}
+#list-view{display:none}
+.view{padding:16px;max-width:600px;margin:0 auto}
+
+/* 入力フォーム */
+.section-title{font-size:13px;color:#666;margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.field{margin-bottom:18px}
+.field label{display:block;font-size:18px;font-weight:700;margin-bottom:8px;color:#222}
+.field input,.field select{width:100%;padding:14px 16px;font-size:20px;border:2px solid #ccc;border-radius:10px;background:#fff;color:#222}
+.field input:focus,.field select:focus{outline:none;border-color:#1a56a0}
+.field .hint{font-size:13px;color:#888;margin-top:4px}
+
+/* カメラエリア */
+.camera-area{border:2px dashed #aaa;border-radius:12px;background:#fafafa;padding:20px;text-align:center;cursor:pointer;position:relative;margin-bottom:18px}
+.camera-area:hover{border-color:#1a56a0;background:#f0f4ff}
+.camera-icon{font-size:48px;margin-bottom:8px;display:block}
+.camera-label{font-size:18px;font-weight:700;color:#1a56a0}
+.camera-hint{font-size:13px;color:#888;margin-top:4px}
+#camera-input{display:none}
+#preview-wrap{display:none;margin-top:12px}
+#plate-preview{width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid #ddd}
+.ocr-result{margin-top:10px;padding:10px 14px;background:#e8f0fe;border-radius:8px;font-size:15px;color:#333}
+.ocr-result b{font-size:20px;color:#1a56a0}
+.ocr-loading{display:none;padding:10px;text-align:center;color:#666;font-size:15px}
+
+/* ボタン */
+.btn-primary{width:100%;padding:20px;font-size:22px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px;letter-spacing:1px}
+.btn-primary:active{background:#144080;transform:scale(0.98)}
+.btn-primary:disabled{background:#aaa;cursor:not-allowed}
+.btn-danger{padding:10px 18px;font-size:16px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer}
+.btn-danger:active{background:#962d22}
+.btn-success{padding:10px 18px;font-size:16px;font-weight:700;background:#27ae60;color:#fff;border:none;border-radius:8px;cursor:pointer}
+
+/* 完了メッセージ */
+#success-msg{display:none;background:#d4edda;border:1px solid #27ae60;border-radius:10px;padding:16px;margin-top:16px;text-align:center;font-size:18px;color:#1a5c2e;font-weight:700}
+
+/* 一覧画面 */
+.list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.list-header h2{font-size:18px;font-weight:700}
+.btn-csv{padding:10px 16px;font-size:15px;font-weight:700;background:#27ae60;color:#fff;border:none;border-radius:8px;cursor:pointer}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+.stat-card{background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid #e0e0e0}
+.stat-num{font-size:26px;font-weight:700;color:#1a56a0}
+.stat-label{font-size:12px;color:#888;margin-top:2px}
+
+/* テーブル */
+.table-wrap{overflow-x:auto;background:#fff;border-radius:12px;border:1px solid #e0e0e0}
+table{width:100%;border-collapse:collapse;min-width:560px}
+th{background:#1a56a0;color:#fff;padding:12px 10px;text-align:left;font-size:14px;font-weight:700;white-space:nowrap}
+td{padding:12px 10px;border-bottom:1px solid #f0f0f0;font-size:14px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#f8f8f8}
+.badge-in{background:#d4edda;color:#1a5c2e;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
+.badge-out{background:#f0f0f0;color:#555;padding:3px 10px;border-radius:20px;font-size:12px;white-space:nowrap}
+.empty-state{text-align:center;padding:48px 20px;color:#aaa;font-size:16px}
+.plate-num{font-size:18px;font-weight:700;color:#1a56a0;font-family:monospace;letter-spacing:2px}
+
+/* toast */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:30px;font-size:15px;display:none;z-index:999;white-space:nowrap}
+</style>
+</head>
+<body>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="showView('entry')">入　庫</button>
+  <button class="tab-btn" onclick="showView('list')">一覧・出庫</button>
+</div>
+
+<div id="toast"></div>
+
+<!-- 入庫フォーム -->
+<div id="entry-view" class="view">
+  <div style="margin-bottom:18px">
+    <div class="field">
+      <label>訪問者名（会社名）</label>
+      <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社" inputmode="text">
+    </div>
+    <div class="field">
+      <label>訪問先（担当部署・担当者）</label>
+      <input type="text" id="destination" placeholder="例：営業部 鈴木" inputmode="text">
+    </div>
+  </div>
+
+  <div class="field">
+    <label>ナンバープレート</label>
+    <div class="camera-area" onclick="document.getElementById('camera-input').click()">
+      <span class="camera-icon">📷</span>
+      <div class="camera-label">カメラで撮影する</div>
+      <div class="camera-hint">タップしてカメラを起動</div>
+    </div>
+    <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handlePhoto(this)">
+    <div id="preview-wrap">
+      <img id="plate-preview" src="" alt="プレート画像">
+      <div class="ocr-loading" id="ocr-loading">🔍 ナンバーを読み取り中…</div>
+      <div class="ocr-result" id="ocr-result" style="display:none"></div>
+    </div>
+    <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" style="margin-top:10px">
+    <div class="hint">・を除いた数字部分のみ入力</div>
+  </div>
+
+  <button class="btn-primary" onclick="register()">入　庫　登　録</button>
+  <div id="success-msg">✅ 入庫登録が完了しました！</div>
+</div>
+
+<!-- 一覧・出庫 -->
+<div id="list-view" class="view" style="display:none">
+  <div class="list-header">
+    <h2 id="today-label"></h2>
+    <button class="btn-csv" onclick="downloadCSV()">📥 CSV出力</button>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">本日合計</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-in" style="color:#27ae60">0</div><div class="stat-label">入庫中</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-out" style="color:#888">0</div><div class="stat-label">出庫済み</div></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>入庫時刻</th>
+          <th>会社名・氏名</th>
+          <th>訪問先</th>
+          <th>ナンバー</th>
+          <th>出庫</th>
+        </tr>
+      </thead>
+      <tbody id="record-tbody"></tbody>
+    </table>
+    <div class="empty-state" id="empty-state">まだ記録がありません</div>
+  </div>
+</div>
+
+<script>
+const APIKEY_PLACEHOLDER = "";
+let records = [];
+
+function showView(v){
+  document.getElementById('entry-view').style.display = v==='entry'?'block':'none';
+  document.getElementById('list-view').style.display = v==='list'?'block':'none';
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(v==='entry'&&i===0)||(v==='list'&&i===1)));
+  if(v==='list') renderList();
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(()=>t.style.display='none',2500);
+}
+
+async function handlePhoto(inp){
+  const file=inp.files[0];
+  if(!file)return;
+  const wrap=document.getElementById('preview-wrap');
+  const img=document.getElementById('plate-preview');
+  const loading=document.getElementById('ocr-loading');
+  const result=document.getElementById('ocr-result');
+  wrap.style.display='block';
+  result.style.display='none';
+  loading.style.display='block';
+  const reader=new FileReader();
+  reader.onload=async e=>{
+    img.src=e.target.result;
+    const b64=e.target.result.split(',')[1];
+    const num=await ocrPlate(b64);
+    loading.style.display='none';
+    if(num){
+      document.getElementById('plate-number').value=num;
+      result.style.display='block';
+      result.innerHTML='読み取り結果：<b>'+num+'</b>　<span style="font-size:13px;color:#888">（修正可能）</span>';
+    }else{
+      result.style.display='block';
+      result.innerHTML='<span style="color:#c0392b">読み取りできませんでした。手動で入力してください。</span>';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+async function ocrPlate(b64){
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:100,
+        messages:[{role:'user',content:[
+          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+          {type:'text',text:'この画像はナンバープレートです。ナンバープレートの数字部分（・を除いた1〜4桁の数字のみ）を抽出してください。数字のみを返してください。数字が読み取れない場合は「不明」とだけ返してください。'}
+        ]}]
+      })
+    });
+    const data=await res.json();
+    const text=(data.content&&data.content[0]&&data.content[0].text)||'';
+    const match=text.match(/\d{1,4}/);
+    return match?match[0]:null;
+  }catch(e){return null;}
+}
+
+function now(){
+  const d=new Date();
+  return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+}
+function today(){
+  const d=new Date();
+  return d.getFullYear()+'-'+(d.getMonth()+1).toString().padStart(2,'0')+'-'+d.getDate().toString().padStart(2,'0');
+}
+function todayJP(){
+  const d=new Date();
+  return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+['日','月','火','水','木','金','土'][d.getDay()]+'）';
+}
+
+function register(){
+  const name=document.getElementById('visitor-name').value.trim();
+  const dest=document.getElementById('destination').value.trim();
+  const plate=document.getElementById('plate-number').value.trim();
+  if(!name){toast('訪問者名を入力してください');return;}
+  if(!plate||!/^\d{1,4}$/.test(plate)){toast('ナンバーを1〜4桁の数字で入力してください');return;}
+  records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name,dest,plate});
+  document.getElementById('visitor-name').value='';
+  document.getElementById('destination').value='';
+  document.getElementById('plate-number').value='';
+  document.getElementById('preview-wrap').style.display='none';
+  document.getElementById('ocr-result').style.display='none';
+  const msg=document.getElementById('success-msg');
+  msg.style.display='block';
+  setTimeout(()=>msg.style.display='none',3000);
+}
+
+function checkout(id){
+  const r=records.find(r=>r.id===id);
+  if(r)r.outTime=now();
+  renderList();
+}
+
+function renderList(){
+  const td=today();
+  document.getElementById('today-label').textContent=todayJP();
+  const todays=records.filter(r=>r.date===td);
+  const inCar=todays.filter(r=>!r.outTime);
+  document.getElementById('stat-total').textContent=todays.length;
+  document.getElementById('stat-in').textContent=inCar.length;
+  document.getElementById('stat-out').textContent=todays.filter(r=>r.outTime).length;
+  const tbody=document.getElementById('record-tbody');
+  const empty=document.getElementById('empty-state');
+  if(!todays.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=todays.map(r=>`
+    <tr>
+      <td>${r.inTime}</td>
+      <td style="font-weight:600">${r.name}</td>
+      <td style="color:#555">${r.dest||'—'}</td>
+      <td><span class="plate-num">${r.plate}</span></td>
+      <td>${r.outTime
+        ?`<span class="badge-out">${r.outTime} 出庫</span>`
+        :`<button class="btn-danger" onclick="checkout(${r.id})">出庫</button>`}</td>
+    </tr>`).join('');
+}
+
+function downloadCSV(){
+  const td=today();
+  const todays=records.filter(r=>r.date===td);
+  if(!todays.length){toast('出力するデータがありません');return;}
+  const bom='\uFEFF';
+  const header='日付,入庫時刻,出庫時刻,訪問者名,訪問先,ナンバー\n';
+  const rows=todays.map(r=>[r.date,r.inTime,r.outTime||'',`"${r.name}"`,`"${r.dest||''}"`,r.plate].join(',')).join('\n');
+  const blob=new Blob([bom+header+rows],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='入出庫記録_'+td+'.csv';
+  a.click();
+}
+</script>
+</body>
+</html>
