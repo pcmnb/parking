@@ -10,20 +10,13 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .tab-bar{display:flex;background:#1a56a0;position:sticky;top:0;z-index:100}
 .tab-btn{flex:1;padding:14px 8px;color:#fff;border:none;background:transparent;font-size:16px;cursor:pointer;border-bottom:3px solid transparent;font-weight:500}
 .tab-btn.active{border-bottom:3px solid #fff;background:rgba(255,255,255,0.15)}
-#entry-view{display:block}
-#list-view{display:none}
 .view{padding:16px;max-width:600px;margin:0 auto}
-
-/* 入力フォーム */
-.section-title{font-size:13px;color:#666;margin-bottom:6px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
 .field{margin-bottom:18px}
 .field label{display:block;font-size:18px;font-weight:700;margin-bottom:8px;color:#222}
-.field input,.field select{width:100%;padding:14px 16px;font-size:20px;border:2px solid #ccc;border-radius:10px;background:#fff;color:#222}
-.field input:focus,.field select:focus{outline:none;border-color:#1a56a0}
+.field input{width:100%;padding:14px 16px;font-size:20px;border:2px solid #ccc;border-radius:10px;background:#fff;color:#222}
+.field input:focus{outline:none;border-color:#1a56a0}
 .field .hint{font-size:13px;color:#888;margin-top:4px}
-
-/* カメラエリア */
-.camera-area{border:2px dashed #aaa;border-radius:12px;background:#fafafa;padding:20px;text-align:center;cursor:pointer;position:relative;margin-bottom:18px}
+.camera-area{border:2px dashed #aaa;border-radius:12px;background:#fafafa;padding:20px;text-align:center;cursor:pointer;margin-bottom:18px}
 .camera-area:hover{border-color:#1a56a0;background:#f0f4ff}
 .camera-icon{font-size:48px;margin-bottom:8px;display:block}
 .camera-label{font-size:18px;font-weight:700;color:#1a56a0}
@@ -34,19 +27,11 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .ocr-result{margin-top:10px;padding:10px 14px;background:#e8f0fe;border-radius:8px;font-size:15px;color:#333}
 .ocr-result b{font-size:20px;color:#1a56a0}
 .ocr-loading{display:none;padding:10px;text-align:center;color:#666;font-size:15px}
-
-/* ボタン */
 .btn-primary{width:100%;padding:20px;font-size:22px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px;letter-spacing:1px}
 .btn-primary:active{background:#144080;transform:scale(0.98)}
-.btn-primary:disabled{background:#aaa;cursor:not-allowed}
 .btn-danger{padding:10px 18px;font-size:16px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer}
-.btn-danger:active{background:#962d22}
 .btn-success{padding:10px 18px;font-size:16px;font-weight:700;background:#27ae60;color:#fff;border:none;border-radius:8px;cursor:pointer}
-
-/* 完了メッセージ */
 #success-msg{display:none;background:#d4edda;border:1px solid #27ae60;border-radius:10px;padding:16px;margin-top:16px;text-align:center;font-size:18px;color:#1a5c2e;font-weight:700}
-
-/* 一覧画面 */
 .list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
 .list-header h2{font-size:18px;font-weight:700}
 .btn-csv{padding:10px 16px;font-size:15px;font-weight:700;background:#27ae60;color:#fff;border:none;border-radius:8px;cursor:pointer}
@@ -54,20 +39,16 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .stat-card{background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid #e0e0e0}
 .stat-num{font-size:26px;font-weight:700;color:#1a56a0}
 .stat-label{font-size:12px;color:#888;margin-top:2px}
-
-/* テーブル */
 .table-wrap{overflow-x:auto;background:#fff;border-radius:12px;border:1px solid #e0e0e0}
 table{width:100%;border-collapse:collapse;min-width:560px}
 th{background:#1a56a0;color:#fff;padding:12px 10px;text-align:left;font-size:14px;font-weight:700;white-space:nowrap}
 td{padding:12px 10px;border-bottom:1px solid #f0f0f0;font-size:14px;vertical-align:middle}
 tr:last-child td{border-bottom:none}
 tr:hover td{background:#f8f8f8}
-.badge-in{background:#d4edda;color:#1a5c2e;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700;white-space:nowrap}
 .badge-out{background:#f0f0f0;color:#555;padding:3px 10px;border-radius:20px;font-size:12px;white-space:nowrap}
 .empty-state{text-align:center;padding:48px 20px;color:#aaa;font-size:16px}
 .plate-num{font-size:18px;font-weight:700;color:#1a56a0;font-family:monospace;letter-spacing:2px}
-
-/* toast */
+.save-badge{background:#e8f5e9;border:1px solid #27ae60;border-radius:8px;padding:8px 14px;font-size:13px;color:#1a5c2e;margin-bottom:16px;display:flex;align-items:center;gap:6px}
 #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:30px;font-size:15px;display:none;z-index:999;white-space:nowrap}
 </style>
 </head>
@@ -77,22 +58,19 @@ tr:hover td{background:#f8f8f8}
   <button class="tab-btn active" onclick="showView('entry')">入　庫</button>
   <button class="tab-btn" onclick="showView('list')">一覧・出庫</button>
 </div>
-
 <div id="toast"></div>
 
 <!-- 入庫フォーム -->
 <div id="entry-view" class="view">
-  <div style="margin-bottom:18px">
-    <div class="field">
-      <label>訪問者名（会社名）</label>
-      <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社" inputmode="text">
-    </div>
-    <div class="field">
-      <label>訪問先（担当部署・担当者）</label>
-      <input type="text" id="destination" placeholder="例：営業部 鈴木" inputmode="text">
-    </div>
+  <div class="save-badge">💾 データはこの端末に自動保存されます</div>
+  <div class="field">
+    <label>訪問者名（会社名）</label>
+    <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社">
   </div>
-
+  <div class="field">
+    <label>訪問先（担当部署・担当者）</label>
+    <input type="text" id="destination" placeholder="例：営業部 鈴木">
+  </div>
   <div class="field">
     <label>ナンバープレート</label>
     <div class="camera-area" onclick="document.getElementById('camera-input').click()">
@@ -109,7 +87,6 @@ tr:hover td{background:#f8f8f8}
     <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" style="margin-top:10px">
     <div class="hint">・を除いた数字部分のみ入力</div>
   </div>
-
   <button class="btn-primary" onclick="register()">入　庫　登　録</button>
   <div id="success-msg">✅ 入庫登録が完了しました！</div>
 </div>
@@ -143,8 +120,22 @@ tr:hover td{background:#f8f8f8}
 </div>
 
 <script>
-const APIKEY_PLACEHOLDER = "";
-let records = [];
+const STORAGE_KEY = 'parking_records';
+
+function loadRecords(){
+  try{
+    const d = localStorage.getItem(STORAGE_KEY);
+    return d ? JSON.parse(d) : [];
+  }catch(e){ return []; }
+}
+
+function saveRecords(records){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }catch(e){ toast('保存に失敗しました'); }
+}
+
+let records = loadRecords();
 
 function showView(v){
   document.getElementById('entry-view').style.display = v==='entry'?'block':'none';
@@ -155,7 +146,7 @@ function showView(v){
 
 function toast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg;t.style.display='block';
+  t.textContent=msg; t.style.display='block';
   setTimeout(()=>t.style.display='none',2500);
 }
 
@@ -228,6 +219,7 @@ function register(){
   if(!name){toast('訪問者名を入力してください');return;}
   if(!plate||!/^\d{1,4}$/.test(plate)){toast('ナンバーを1〜4桁の数字で入力してください');return;}
   records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name,dest,plate});
+  saveRecords(records);
   document.getElementById('visitor-name').value='';
   document.getElementById('destination').value='';
   document.getElementById('plate-number').value='';
@@ -240,7 +232,7 @@ function register(){
 
 function checkout(id){
   const r=records.find(r=>r.id===id);
-  if(r)r.outTime=now();
+  if(r){ r.outTime=now(); saveRecords(records); }
   renderList();
 }
 
@@ -248,9 +240,8 @@ function renderList(){
   const td=today();
   document.getElementById('today-label').textContent=todayJP();
   const todays=records.filter(r=>r.date===td);
-  const inCar=todays.filter(r=>!r.outTime);
   document.getElementById('stat-total').textContent=todays.length;
-  document.getElementById('stat-in').textContent=inCar.length;
+  document.getElementById('stat-in').textContent=todays.filter(r=>!r.outTime).length;
   document.getElementById('stat-out').textContent=todays.filter(r=>r.outTime).length;
   const tbody=document.getElementById('record-tbody');
   const empty=document.getElementById('empty-state');
@@ -268,19 +259,7 @@ function renderList(){
     </tr>`).join('');
 }
 
-function downloadCSV(){
-  const td=today();
-  const todays=records.filter(r=>r.date===td);
-  if(!todays.length){toast('出力するデータがありません');return;}
-  const bom='\uFEFF';
-  const header='日付,入庫時刻,出庫時刻,訪問者名,訪問先,ナンバー\n';
-  const rows=todays.map(r=>[r.date,r.inTime,r.outTime||'',`"${r.name}"`,`"${r.dest||''}"`,r.plate].join(',')).join('\n');
-  const blob=new Blob([bom+header+rows],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='入出庫記録_'+td+'.csv';
-  a.click();
-}
+renderList();
 </script>
 </body>
 </html>
