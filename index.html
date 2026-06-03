@@ -267,6 +267,7 @@ function register(){
   if(!plate||!/^\d{1,4}$/.test(plate)){toast('ナンバーを1〜4桁の数字で入力してください');return;}
   const finalName=name||'不明';
   const finalDest=dest||'不明';
+  document.activeElement.blur();
   records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name:finalName,dest:finalDest,plate});
   saveRecords();
   document.getElementById('visitor-name').value='';
