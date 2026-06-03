@@ -309,6 +309,7 @@ function closeModalDirect(){
 }
 
 function saveEdit(){
+  document.activeElement.blur();
   const r=records.find(r=>r.id===editingId);
   if(!r)return;
   const name=document.getElementById('edit-name').value.trim();
