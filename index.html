@@ -92,6 +92,25 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .btn-search-clear{padding:10px 14px;font-size:15px;font-weight:700;background:#e0e0e0;color:#555;border:none;border-radius:8px;cursor:pointer;white-space:nowrap}
 .search-result-label{font-size:13px;color:#1a56a0;font-weight:700;background:#e8f0fe;border-radius:8px;padding:8px 14px;margin-bottom:10px;display:none}
 .record-card.search-match{border:2px solid #1a56a0;background:#f5f9ff}
+
+/* CSV読み込み・ストレージ削除 */
+.btn-import{padding:10px 16px;font-size:15px;font-weight:700;background:#8e44ad;color:#fff;border:none;border-radius:8px;cursor:pointer}
+#csv-import-input{display:none}
+.btn-danger-sm{padding:10px 16px;font-size:15px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer}
+.import-mode-row{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:14px;background:#f9f0ff;border-radius:10px;border:1px solid #c39bd3}
+.import-mode-row label{font-size:14px;color:#555;font-weight:500}
+.import-mode-select{width:100%;padding:10px 12px;font-size:15px;border:2px solid #8e44ad;border-radius:8px;background:#fff;color:#222}
+.btn-import-do{width:100%;padding:14px;font-size:17px;font-weight:700;background:#8e44ad;color:#fff;border:none;border-radius:10px;cursor:pointer;margin-top:4px}
+
+/* 確認モーダル */
+.confirm-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:400;align-items:center;justify-content:center;padding:16px}
+.confirm-modal-overlay.open{display:flex}
+.confirm-modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:360px;text-align:center}
+.confirm-modal-icon{font-size:48px;margin-bottom:12px}
+.confirm-modal-msg{font-size:16px;color:#333;line-height:1.6;margin-bottom:20px}
+.confirm-modal-actions{display:flex;gap:10px}
+.btn-confirm-ok{flex:1;padding:16px;font-size:17px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:10px;cursor:pointer}
+.btn-confirm-cancel{flex:1;padding:16px;font-size:17px;font-weight:700;background:#e0e0e0;color:#555;border:none;border-radius:10px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -104,7 +123,10 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 
 <!-- 入庫フォーム -->
 <div id="entry-view" class="view">
-  <div class="save-badge">💾 データはこの端末に自動保存されます</div>
+  <div class="save-badge" style="justify-content:space-between;flex-wrap:wrap">
+    <span>💾 データはこの端末に自動保存されます</span>
+    <button class="btn-danger-sm" onclick="confirmClearStorage()" style="font-size:13px;padding:6px 12px">🗑️ データ全削除</button>
+  </div>
   <div class="field">
     <label>訪問者名（会社名）</label>
     <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社">
@@ -145,7 +167,10 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 <div id="list-view" class="view" style="display:none">
   <div class="list-header">
     <h2 id="today-label"></h2>
-    <button class="btn-csv" onclick="openCsvModal()">📥 CSV出力</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-import" onclick="openImportModal()">📂 CSV読込</button>
+      <button class="btn-csv" onclick="openCsvModal()">📥 CSV出力</button>
+    </div>
   </div>
   <!-- ナンバー検索 -->
   <div class="search-box">
@@ -212,6 +237,42 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
       <button class="btn-csv-opt btn-csv-all" onclick="doDownloadCSV('all')">📋　全期間のデータ</button>
     </div>
     <button class="btn-csv-cancel" onclick="closeCsvModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- CSV読み込みモーダル -->
+<div class="csv-modal-overlay" id="import-modal-overlay" onclick="closeImportModalOutside(event)">
+  <div class="csv-modal">
+    <div class="csv-modal-title">📂 CSV読み込み（上書き）</div>
+    <div class="csv-btn-group">
+      <div class="import-mode-row">
+        <label>読み込み方法を選択</label>
+        <select class="import-mode-select" id="import-mode">
+          <option value="overwrite">🔄 全データを上書き（置き換え）</option>
+          <option value="merge">➕ 既存データに追記（重複除外）</option>
+        </select>
+      </div>
+      <div style="padding:10px 0 0">
+        <label style="font-size:14px;color:#666;font-weight:500;display:block;margin-bottom:8px">CSVファイルを選択</label>
+        <input type="file" id="csv-import-input" accept=".csv,text/csv" onchange="onCsvFileSelected(this)">
+        <button class="btn-import-do" onclick="document.getElementById('csv-import-input').click()">📁 ファイルを選ぶ</button>
+        <div id="import-file-name" style="margin-top:8px;font-size:13px;color:#888;text-align:center"></div>
+      </div>
+      <button class="btn-import-do" id="btn-do-import" onclick="doImportCSV()" style="display:none;background:#27ae60">✅ 読み込みを実行</button>
+    </div>
+    <button class="btn-csv-cancel" onclick="closeImportModal()">キャンセル</button>
+  </div>
+</div>
+
+<!-- 確認モーダル（ストレージ全削除） -->
+<div class="confirm-modal-overlay" id="confirm-modal-overlay">
+  <div class="confirm-modal">
+    <div class="confirm-modal-icon">⚠️</div>
+    <div class="confirm-modal-msg" id="confirm-modal-msg">本当にすべてのデータを削除しますか？<br><b>この操作は元に戻せません。</b></div>
+    <div class="confirm-modal-actions">
+      <button class="btn-confirm-cancel" onclick="closeConfirmModal()">キャンセル</button>
+      <button class="btn-confirm-ok" id="btn-confirm-ok" onclick="executeClearStorage()">全削除する</button>
+    </div>
   </div>
 </div>
 
@@ -531,6 +592,110 @@ function doDownloadCSV(mode){
   setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
   closeCsvModal();
   toast('CSVを保存しました（'+filtered.length+'件）');
+}
+
+// ===== LocalStorage全削除 =====
+function confirmClearStorage(){
+  document.getElementById('confirm-modal-overlay').classList.add('open');
+}
+function closeConfirmModal(){
+  document.getElementById('confirm-modal-overlay').classList.remove('open');
+}
+function executeClearStorage(){
+  try{localStorage.removeItem(STORAGE_KEY);}catch(e){}
+  records=[];
+  closeConfirmModal();
+  renderList();
+  toast('すべてのデータを削除しました');
+}
+
+// ===== CSV上書き読み込み =====
+let importFile=null;
+
+function openImportModal(){
+  importFile=null;
+  document.getElementById('csv-import-input').value='';
+  document.getElementById('import-file-name').textContent='';
+  document.getElementById('btn-do-import').style.display='none';
+  document.getElementById('import-modal-overlay').classList.add('open');
+}
+function closeImportModal(){
+  document.getElementById('import-modal-overlay').classList.remove('open');
+  importFile=null;
+}
+function closeImportModalOutside(e){
+  if(e.target===document.getElementById('import-modal-overlay'))closeImportModal();
+}
+function onCsvFileSelected(inp){
+  const file=inp.files[0];
+  if(!file){importFile=null;document.getElementById('btn-do-import').style.display='none';return;}
+  importFile=file;
+  document.getElementById('import-file-name').textContent='📄 '+file.name;
+  document.getElementById('btn-do-import').style.display='block';
+}
+
+function parseCSVLine(line){
+  const result=[];
+  let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){result.push(cur.trim());cur='';}
+    else{cur+=c;}
+  }
+  result.push(cur.trim());
+  return result;
+}
+
+function doImportCSV(){
+  if(!importFile){toast('ファイルを選択してください');return;}
+  const mode=document.getElementById('import-mode').value;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      let text=e.target.result;
+      if(text.charCodeAt(0)===0xFEFF)text=text.slice(1);
+      const lines=text.split(/\r?\n/).filter(l=>l.trim());
+      if(lines.length<2){toast('データが見つかりませんでした');return;}
+      const imported=[];
+      for(let i=1;i<lines.length;i++){
+        const cols=parseCSVLine(lines[i]);
+        if(cols.length<6)continue;
+        const [date,inTime,outTime,name,dest,plate]=cols;
+        if(!date||!inTime||!plate)continue;
+        imported.push({
+          id:Date.now()+i,
+          date:date.trim(),
+          inTime:inTime.trim(),
+          outTime:outTime.trim()||null,
+          name:name.replace(/^"|"$/g,'').trim()||'不明',
+          dest:dest.replace(/^"|"$/g,'').trim()||'',
+          plate:plate.trim()
+        });
+      }
+      if(!imported.length){toast('有効なデータが見つかりませんでした');return;}
+      if(mode==='overwrite'){
+        records=imported;
+        saveRecords();
+        closeImportModal();
+        renderList();
+        toast('上書き完了：'+imported.length+'件を読み込みました');
+      }else{
+        const existKeys=new Set(records.map(r=>r.date+'|'+r.inTime+'|'+r.plate));
+        const newOnes=imported.filter(r=>!existKeys.has(r.date+'|'+r.inTime+'|'+r.plate));
+        records=[...records,...newOnes];
+        records.sort((a,b)=>a.date.localeCompare(b.date)||a.inTime.localeCompare(b.inTime));
+        saveRecords();
+        closeImportModal();
+        renderList();
+        toast('追記完了：'+newOnes.length+'件を追加しました（重複除外済）');
+      }
+    }catch(err){
+      toast('CSVの読み込みに失敗しました');
+      console.error(err);
+    }
+  };
+  reader.readAsText(importFile,'UTF-8');
 }
 
 renderList();
