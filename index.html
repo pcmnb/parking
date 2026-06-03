@@ -84,6 +84,14 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 .csv-date-input{width:100%;padding:12px 14px;font-size:16px;border:2px solid #1a56a0;border-radius:10px;background:#fff;color:#222}
 .btn-csv-do{width:100%;padding:14px;font-size:17px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:10px;cursor:pointer;margin-top:4px}
 .btn-csv-cancel{width:100%;padding:12px;font-size:15px;font-weight:500;background:#f0f0f0;color:#555;border:none;border-radius:10px;cursor:pointer;margin-top:6px}
+
+/* ナンバー検索 */
+.search-box{display:flex;gap:8px;margin-bottom:14px;align-items:center}
+.search-input{flex:1;padding:12px 14px;font-size:max(16px,18px);border:2px solid #ccc;border-radius:10px;background:#fff;color:#222;font-family:monospace;letter-spacing:2px}
+.search-input:focus{outline:none;border-color:#1a56a0}
+.btn-search-clear{padding:10px 14px;font-size:15px;font-weight:700;background:#e0e0e0;color:#555;border:none;border-radius:8px;cursor:pointer;white-space:nowrap}
+.search-result-label{font-size:13px;color:#1a56a0;font-weight:700;background:#e8f0fe;border-radius:8px;padding:8px 14px;margin-bottom:10px;display:none}
+.record-card.search-match{border:2px solid #1a56a0;background:#f5f9ff}
 </style>
 </head>
 <body>
@@ -139,6 +147,13 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
     <h2 id="today-label"></h2>
     <button class="btn-csv" onclick="openCsvModal()">📥 CSV出力</button>
   </div>
+  <!-- ナンバー検索 -->
+  <div class="search-box">
+    <input type="text" id="search-plate" class="search-input" placeholder="🔍 ナンバーで検索" inputmode="numeric" maxlength="4"
+      oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕ クリア</button>
+  </div>
+  <div class="search-result-label" id="search-result-label"></div>
   <div class="stats">
     <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">本日合計</div></div>
     <div class="stat-card"><div class="stat-num" id="stat-in" style="color:#27ae60">0</div><div class="stat-label">入庫中</div></div>
@@ -382,8 +397,66 @@ function deleteRecord(){
   toast('削除しました');
 }
 
+function onSearchInput(){
+  const val=document.getElementById('search-plate').value.trim();
+  document.getElementById('btn-search-clear').style.display=val?'inline-block':'none';
+  renderList();
+}
+
+function doSearch(){
+  document.activeElement.blur();
+  renderList();
+}
+
+function clearSearch(){
+  document.getElementById('search-plate').value='';
+  document.getElementById('btn-search-clear').style.display='none';
+  renderList();
+}
+
 function renderList(){
   const td=today();
+  const searchVal=document.getElementById('search-plate').value.trim();
+  const isSearch=searchVal.length>0;
+  const resultLabel=document.getElementById('search-result-label');
+
+  if(isSearch){
+    // 全期間から部分一致検索
+    const matched=records.filter(r=>r.plate.includes(searchVal))
+      .sort((a,b)=>a.date.localeCompare(b.date)||a.inTime.localeCompare(b.inTime));
+    document.getElementById('today-label').textContent='🔍 ナンバー検索結果：'+searchVal;
+    document.getElementById('stat-total').textContent=matched.length;
+    document.getElementById('stat-in').textContent=matched.filter(r=>!r.outTime).length;
+    document.getElementById('stat-out').textContent=matched.filter(r=>r.outTime).length;
+    resultLabel.style.display='block';
+    if(matched.length){
+      resultLabel.textContent='全期間から '+matched.length+' 件が見つかりました';
+    }else{
+      resultLabel.textContent='「'+searchVal+'」に一致する記録はありません';
+    }
+    const list=document.getElementById('record-list');
+    const empty=document.getElementById('empty-state');
+    if(!matched.length){list.innerHTML='';empty.style.display='block';return;}
+    empty.style.display='none';
+    list.innerHTML=matched.map(r=>`
+      <div class="record-card search-match" ontouchstart="touchStart(event)" ontouchend="touchEnd(event,${r.id})" onclick="openEdit(${r.id})" style="-webkit-tap-highlight-color:rgba(26,86,160,0.15);cursor:pointer">
+        <div class="record-card-top">
+          <span class="record-name">${r.name}</span>
+          <span class="plate-num">${r.plate}</span>
+        </div>
+        <div class="record-card-mid">訪問先：${r.dest||'—'} ／ 📅 ${r.date}</div>
+        <div class="record-card-bot">
+          <span class="time-info">入庫 ${r.inTime}${r.outTime?' ／ 出庫 '+r.outTime:''}</span>
+          ${r.outTime
+            ?'<span class="badge-out">出庫済み</span>'
+            :`<button class="btn-checkout" onclick="event.stopPropagation();checkout(${r.id},event)" ontouchend="event.stopPropagation();checkout(${r.id},event)">出　庫</button>`}
+        </div>
+      </div>`).join('');
+    return;
+  }
+
+  // 通常モード（今日のみ）
+  resultLabel.style.display='none';
   document.getElementById('today-label').textContent=todayJP();
   const todays=records.filter(r=>r.date===td);
   document.getElementById('stat-total').textContent=todays.length;
