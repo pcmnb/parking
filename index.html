@@ -422,8 +422,11 @@ function renderList(){
 
   if(isSearch){
     // 先頭の0を除去して検索（01→1、011→11、0111→111）
+    const startsWithZero=searchVal.startsWith('0');
     const effectiveVal=searchVal.replace(/^0+/,'');
-    const matched=records.filter(r=>effectiveVal?r.plate.includes(effectiveVal):false)
+    const matched=records.filter(r=>effectiveVal
+      ?(startsWithZero ? r.plate===effectiveVal : r.plate.includes(effectiveVal))
+      :false)
       .sort((a,b)=>a.date.localeCompare(b.date)||a.inTime.localeCompare(b.inTime));
     document.getElementById('today-label').textContent='🔍 ナンバー検索結果：'+effectiveVal;
     document.getElementById('stat-total').textContent=matched.length;
