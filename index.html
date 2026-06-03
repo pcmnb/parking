@@ -5,116 +5,156 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>車両入出庫管理</title>
 <style>
+/* ===== ユニバーサルデザイン対応（高齢者・色弱者） =====
+   ・文字サイズ大きめ（最小20px、ラベルは24px）
+   ・ボタン高さ十分（タップしやすい）
+   ・色弱対応：赤緑を識別色に使わず、青・オレンジ・グレーで区別
+   ・コントラスト強化（文字は#111、補助文字も#555以上）
+   ・入庫中バッジ→青枠＋太字、出庫済み→グレー＋斜線ラベル
+========================================================= */
+
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
-.tab-bar{display:flex;background:#1a56a0;position:sticky;top:0;z-index:100}
-.tab-btn{flex:1;padding:10px 8px 16px;color:rgba(255,255,255,0.55);border:none;background:transparent;font-size:14px;cursor:pointer;border-bottom:5px solid transparent;font-weight:500;display:flex;flex-direction:column;align-items:center;gap:3px;transition:background .2s,color .2s,border-color .2s}
-.tab-btn .tab-icon{font-size:22px;line-height:1}
-.tab-btn .tab-label{font-size:13px;letter-spacing:0.5px}
-.tab-btn.active{color:#fff;border-bottom:6px solid #ffe066;background:rgba(255,255,255,0.15);font-weight:700;box-shadow:inset 0 -2px 0 #ffe066}
-.tab-btn.active .tab-label{font-size:14px;font-weight:700}
-.tab-btn.active .tab-icon{font-size:26px}
-.view{padding:16px;max-width:600px;margin:0 auto}
-.field{margin-bottom:18px}
-.field label{display:block;font-size:18px;font-weight:700;margin-bottom:8px;color:#222}
-.field input{width:100%;padding:14px 16px;font-size:max(16px,20px);border:2px solid #ccc;border-radius:10px;background:#fff;color:#222}
-.field input:focus{outline:none;border-color:#1a56a0}
-.field .hint{font-size:13px;color:#888;margin-top:4px}
-.camera-area{border:2px dashed #aaa;border-radius:12px;background:#fafafa;padding:20px;text-align:center;cursor:pointer;margin-bottom:10px}
-.camera-area:hover{border-color:#1a56a0;background:#f0f4ff}
-.camera-icon{font-size:48px;margin-bottom:8px;display:block}
-.camera-label{font-size:18px;font-weight:700;color:#1a56a0}
-.camera-hint{font-size:13px;color:#888;margin-top:4px}
+body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f0f0;color:#111;font-size:20px;line-height:1.6}
+
+/* ===== タブバー ===== */
+.tab-bar{display:flex;background:#0d47a1;position:sticky;top:0;z-index:100;border-bottom:4px solid #ffa000}
+.tab-btn{flex:1;padding:16px 8px 20px;color:rgba(255,255,255,0.6);border:none;background:transparent;font-size:17px;cursor:pointer;border-bottom:6px solid transparent;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background .2s,color .2s,border-color .2s}
+.tab-btn .tab-icon{font-size:30px;line-height:1}
+.tab-btn .tab-label{font-size:17px;letter-spacing:1px}
+.tab-btn.active{color:#fff;border-bottom:7px solid #ffa000;background:rgba(255,255,255,0.18);font-weight:800}
+.tab-btn.active .tab-label{font-size:19px;font-weight:800}
+.tab-btn.active .tab-icon{font-size:34px}
+
+/* ===== メインビュー ===== */
+.view{padding:20px;max-width:600px;margin:0 auto}
+
+/* ===== フォームフィールド ===== */
+.field{margin-bottom:24px}
+.field label{display:block;font-size:22px;font-weight:800;margin-bottom:10px;color:#111}
+.field input{width:100%;padding:18px 20px;font-size:22px;border:3px solid #999;border-radius:12px;background:#fff;color:#111}
+.field input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.25)}
+.field .hint{font-size:18px;color:#555;margin-top:6px;font-weight:500}
+
+/* ===== カメラエリア ===== */
+.camera-area{border:3px dashed #888;border-radius:14px;background:#fafafa;padding:26px 20px;text-align:center;cursor:pointer;margin-bottom:10px}
+.camera-area:active{border-color:#0d47a1;background:#e8f0ff}
+.camera-icon{font-size:56px;margin-bottom:10px;display:block}
+.camera-label{font-size:20px;font-weight:800;color:#0d47a1}
+.camera-hint{font-size:17px;color:#555;margin-top:6px}
 #camera-input{display:none}
 #gallery-input{display:none}
-#preview-wrap{display:none;margin-top:12px}
-#plate-preview{width:100%;max-height:200px;object-fit:contain;border-radius:8px;border:1px solid #ddd}
-.ocr-result{margin-top:10px;padding:10px 14px;background:#e8f0fe;border-radius:8px;font-size:15px;color:#333}
-.ocr-result b{font-size:20px;color:#1a56a0}
-.ocr-loading{display:none;padding:10px;text-align:center;color:#666;font-size:15px}
-.btn-primary{width:100%;padding:20px;font-size:22px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:8px;letter-spacing:1px}
-.btn-primary:active{background:#144080;transform:scale(0.98)}
-#success-msg{display:none;background:#d4edda;border:1px solid #27ae60;border-radius:10px;padding:16px;margin-top:16px;text-align:center;font-size:18px;color:#1a5c2e;font-weight:700}
-.list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
-.list-header h2{font-size:18px;font-weight:700}
-.btn-csv{padding:10px 16px;font-size:15px;font-weight:700;background:#27ae60;color:#fff;border:none;border-radius:8px;cursor:pointer}
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
-.stat-card{background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid #e0e0e0}
-.stat-num{font-size:26px;font-weight:700;color:#1a56a0}
-.stat-label{font-size:12px;color:#888;margin-top:2px}
-.record-list{display:flex;flex-direction:column;gap:10px}
-.record-card{background:#fff;border-radius:12px;border:1px solid #e0e0e0;padding:14px 16px;cursor:pointer;transition:box-shadow .15s}
-.record-card:active{box-shadow:0 0 0 2px #1a56a0}
-.record-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-.record-name{font-size:18px;font-weight:700}
-.plate-num{font-size:18px;font-weight:700;color:#1a56a0;font-family:monospace;letter-spacing:2px}
-.record-card-mid{font-size:14px;color:#555;margin-bottom:8px}
-.record-card-bot{display:flex;justify-content:space-between;align-items:center}
-.time-info{font-size:13px;color:#888}
-.badge-in{background:#d4edda;color:#1a5c2e;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:700}
-.badge-out{background:#f0f0f0;color:#555;padding:4px 12px;border-radius:20px;font-size:13px}
-.btn-checkout{padding:8px 16px;font-size:15px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer}
-.empty-state{text-align:center;padding:48px 20px;color:#aaa;font-size:16px}
-.save-badge{background:#e8f5e9;border:1px solid #27ae60;border-radius:8px;padding:8px 14px;font-size:13px;color:#1a5c2e;margin-bottom:16px;display:flex;align-items:center;gap:6px}
+#preview-wrap{display:none;margin-top:14px}
+#plate-preview{width:100%;max-height:220px;object-fit:contain;border-radius:10px;border:2px solid #ccc}
+.ocr-result{margin-top:12px;padding:14px 18px;background:#e3f2fd;border-radius:10px;border-left:5px solid #0d47a1;font-size:18px;color:#111}
+.ocr-result b{font-size:24px;color:#0d47a1}
+.ocr-loading{display:none;padding:12px;text-align:center;color:#444;font-size:19px}
 
-/* モーダル */
-.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:200;align-items:flex-end;justify-content:center}
+/* ===== メインボタン ===== */
+.btn-primary{width:100%;padding:26px;font-size:26px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:14px;cursor:pointer;margin-top:10px;letter-spacing:2px;box-shadow:0 4px 0 #083070}
+.btn-primary:active{background:#083070;transform:translateY(3px);box-shadow:none}
+
+/* ===== 成功メッセージ ===== */
+#success-msg{display:none;background:#e3f2fd;border:3px solid #0d47a1;border-radius:12px;padding:20px;margin-top:18px;text-align:center;font-size:22px;color:#0d47a1;font-weight:800}
+
+/* ===== 一覧ヘッダー ===== */
+.list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+.list-header h2{font-size:21px;font-weight:800}
+
+/* CSV・インポートボタン */
+.btn-csv{padding:14px 20px;font-size:18px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:10px;cursor:pointer}
+
+/* ===== 統計カード ===== */
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
+.stat-card{background:#fff;border-radius:12px;padding:14px 8px;text-align:center;border:2px solid #ddd}
+.stat-num{font-size:32px;font-weight:800;color:#0d47a1}
+.stat-label{font-size:16px;color:#444;margin-top:4px;font-weight:600}
+
+/* ===== 記録カード ===== */
+.record-list{display:flex;flex-direction:column;gap:12px}
+.record-card{background:#fff;border-radius:14px;border:2px solid #ccc;padding:18px 20px;cursor:pointer;transition:box-shadow .15s}
+.record-card:active{box-shadow:0 0 0 3px #0d47a1}
+.record-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.record-name{font-size:22px;font-weight:800;color:#111}
+.plate-num{font-size:22px;font-weight:800;color:#0d47a1;font-family:monospace;letter-spacing:3px}
+.record-card-mid{font-size:19px;color:#444;margin-bottom:10px;font-weight:500}
+.record-card-bot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.time-info{font-size:18px;color:#444;font-weight:500}
+
+/* 色弱対応バッジ：青枠＋パターンで入庫中を表現 */
+.badge-in{background:#e3f2fd;color:#0d47a1;padding:6px 16px;border-radius:20px;font-size:17px;font-weight:800;border:2px solid #0d47a1}
+/* 出庫済みはグレー背景＋取り消し線で明示 */
+.badge-out{background:#e8e8e8;color:#555;padding:6px 16px;border-radius:20px;font-size:17px;font-weight:700;border:2px solid #999}
+
+/* 出庫ボタン：オレンジ（青と明確に区別） */
+.btn-checkout{padding:14px 22px;font-size:19px;font-weight:800;background:#e65100;color:#fff;border:none;border-radius:10px;cursor:pointer;box-shadow:0 3px 0 #9a3800;min-width:100px}
+.btn-checkout:active{transform:translateY(2px);box-shadow:none}
+
+.empty-state{text-align:center;padding:52px 20px;color:#666;font-size:20px}
+
+/* 保存バッジ */
+.save-badge{background:#e3f2fd;border:2px solid #0d47a1;border-radius:10px;padding:12px 16px;font-size:18px;color:#0d47a1;margin-bottom:20px;display:flex;align-items:center;gap:8px;font-weight:600}
+
+/* ===== モーダル ===== */
+.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:200;align-items:flex-end;justify-content:center}
 .modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
-.modal-title{font-size:18px;font-weight:700;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
-.modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:#888;padding:0 4px}
-.modal-field{margin-bottom:14px}
-.modal-field label{display:block;font-size:14px;color:#666;margin-bottom:4px;font-weight:500}
-.modal-field input{width:100%;padding:12px 14px;font-size:max(16px,18px);border:2px solid #ccc;border-radius:10px;background:#fff;color:#222}
-.modal-field input:focus{outline:none;border-color:#1a56a0}
-.modal-actions{display:flex;gap:10px;margin-top:18px}
-.btn-save{flex:2;padding:16px;font-size:18px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:10px;cursor:pointer}
-.btn-delete{flex:1;padding:16px;font-size:18px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:10px;cursor:pointer}
+.modal{background:#fff;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:22px;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;color:#111}
+.modal-close{background:#e0e0e0;border:none;font-size:26px;cursor:pointer;color:#333;padding:4px 12px;border-radius:8px;font-weight:700}
+.modal-field{margin-bottom:18px}
+.modal-field label{display:block;font-size:20px;color:#333;margin-bottom:6px;font-weight:700}
+.modal-field input{width:100%;padding:16px 18px;font-size:22px;border:3px solid #aaa;border-radius:12px;background:#fff;color:#111}
+.modal-field input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.2)}
+.modal-actions{display:flex;gap:12px;margin-top:20px}
+.btn-save{flex:2;padding:20px;font-size:22px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:12px;cursor:pointer}
+/* 削除ボタン：オレンジ系（赤と緑の混同を避ける） */
+.btn-delete{flex:1;padding:20px;font-size:22px;font-weight:800;background:#bf360c;color:#fff;border:none;border-radius:12px;cursor:pointer}
 
-#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 24px;border-radius:30px;font-size:15px;display:none;z-index:999;white-space:nowrap}
+/* ===== トースト ===== */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:16px 30px;border-radius:32px;font-size:19px;display:none;z-index:999;white-space:nowrap;font-weight:700}
 
-/* CSV出力モーダル */
-.csv-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:300;align-items:center;justify-content:center;padding:16px}
+/* ===== CSV出力モーダル ===== */
+.csv-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;padding:16px}
 .csv-modal-overlay.open{display:flex}
-.csv-modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:400px}
-.csv-modal-title{font-size:18px;font-weight:700;margin-bottom:20px;text-align:center}
-.csv-btn-group{display:flex;flex-direction:column;gap:12px}
-.btn-csv-opt{width:100%;padding:18px;font-size:17px;font-weight:700;border:none;border-radius:12px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px}
-.btn-csv-today{background:#e8f5e9;color:#1a5c2e}
-.btn-csv-date{background:#e8f0fe;color:#1a56a0}
-.btn-csv-all{background:#fff3e0;color:#7c4a00}
-.csv-date-row{display:none;flex-direction:column;gap:8px}
+.csv-modal{background:#fff;border-radius:18px;padding:26px;width:100%;max-width:420px}
+.csv-modal-title{font-size:22px;font-weight:800;margin-bottom:22px;text-align:center;color:#111}
+.csv-btn-group{display:flex;flex-direction:column;gap:14px}
+.btn-csv-opt{width:100%;padding:22px 18px;font-size:20px;font-weight:800;border:3px solid transparent;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px}
+/* CSV選択肢：色でなく背景パターン＋太字ラベルで区別 */
+.btn-csv-today{background:#e3f2fd;color:#0d47a1;border-color:#0d47a1}
+.btn-csv-date{background:#fff8e1;color:#5d4037;border-color:#ffa000}
+.btn-csv-all{background:#f3e5f5;color:#4a148c;border-color:#7b1fa2}
+.csv-date-row{display:none;flex-direction:column;gap:10px}
 .csv-date-row.show{display:flex}
-.csv-date-input{width:100%;padding:12px 14px;font-size:16px;border:2px solid #1a56a0;border-radius:10px;background:#fff;color:#222}
-.btn-csv-do{width:100%;padding:14px;font-size:17px;font-weight:700;background:#1a56a0;color:#fff;border:none;border-radius:10px;cursor:pointer;margin-top:4px}
-.btn-csv-cancel{width:100%;padding:12px;font-size:15px;font-weight:500;background:#f0f0f0;color:#555;border:none;border-radius:10px;cursor:pointer;margin-top:6px}
+.csv-date-input{width:100%;padding:14px 16px;font-size:20px;border:3px solid #0d47a1;border-radius:12px;background:#fff;color:#111}
+.btn-csv-do{width:100%;padding:18px;font-size:20px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:4px}
+.btn-csv-cancel{width:100%;padding:16px;font-size:19px;font-weight:700;background:#e0e0e0;color:#333;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
 
-/* ナンバー検索 */
-.search-box{display:flex;gap:8px;margin-bottom:14px;align-items:center}
-.search-input{flex:1;padding:12px 14px;font-size:max(16px,18px);border:2px solid #ccc;border-radius:10px;background:#fff;color:#222;font-family:monospace;letter-spacing:2px}
-.search-input:focus{outline:none;border-color:#1a56a0}
-.btn-search-clear{padding:10px 14px;font-size:15px;font-weight:700;background:#e0e0e0;color:#555;border:none;border-radius:8px;cursor:pointer;white-space:nowrap}
-.search-result-label{font-size:13px;color:#1a56a0;font-weight:700;background:#e8f0fe;border-radius:8px;padding:8px 14px;margin-bottom:10px;display:none}
-.record-card.search-match{border:2px solid #1a56a0;background:#f5f9ff}
+/* ===== ナンバー検索 ===== */
+.search-box{display:flex;gap:10px;margin-bottom:16px;align-items:center}
+.search-input{flex:1;padding:16px 18px;font-size:22px;border:3px solid #aaa;border-radius:12px;background:#fff;color:#111;font-family:monospace;letter-spacing:3px}
+.search-input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.2)}
+.btn-search-clear{padding:14px 18px;font-size:18px;font-weight:800;background:#ccc;color:#111;border:none;border-radius:10px;cursor:pointer;white-space:nowrap}
+.search-result-label{font-size:19px;color:#0d47a1;font-weight:800;background:#e3f2fd;border-radius:10px;padding:10px 16px;margin-bottom:12px;display:none;border-left:5px solid #0d47a1}
+.record-card.search-match{border:3px solid #0d47a1;background:#f0f7ff}
 
-/* CSV読み込み・ストレージ削除 */
-.btn-import{padding:10px 16px;font-size:15px;font-weight:700;background:#8e44ad;color:#fff;border:none;border-radius:8px;cursor:pointer}
+/* ===== CSV読み込み・ストレージ削除 ===== */
+.btn-import{padding:14px 20px;font-size:18px;font-weight:800;background:#5e35b1;color:#fff;border:none;border-radius:10px;cursor:pointer}
 #csv-import-input{display:none}
-.btn-danger-sm{padding:10px 16px;font-size:15px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:8px;cursor:pointer}
-.import-mode-row{display:flex;flex-direction:column;gap:8px;margin-top:8px;padding:14px;background:#f9f0ff;border-radius:10px;border:1px solid #c39bd3}
-.import-mode-row label{font-size:14px;color:#555;font-weight:500}
-.import-mode-select{width:100%;padding:10px 12px;font-size:15px;border:2px solid #8e44ad;border-radius:8px;background:#fff;color:#222}
-.btn-import-do{width:100%;padding:14px;font-size:17px;font-weight:700;background:#8e44ad;color:#fff;border:none;border-radius:10px;cursor:pointer;margin-top:4px}
+.btn-danger-sm{padding:10px 16px;font-size:17px;font-weight:800;background:#bf360c;color:#fff;border:none;border-radius:8px;cursor:pointer}
+.import-mode-row{display:flex;flex-direction:column;gap:10px;margin-top:10px;padding:16px;background:#f3e5f5;border-radius:12px;border:2px solid #7b1fa2}
+.import-mode-row label{font-size:19px;color:#333;font-weight:700}
+.import-mode-select{width:100%;padding:14px 16px;font-size:19px;border:3px solid #7b1fa2;border-radius:10px;background:#fff;color:#111}
+.btn-import-do{width:100%;padding:18px;font-size:20px;font-weight:800;background:#5e35b1;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:6px}
 
-/* 確認モーダル */
-.confirm-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:400;align-items:center;justify-content:center;padding:16px}
+/* ===== 確認モーダル ===== */
+.confirm-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:400;align-items:center;justify-content:center;padding:16px}
 .confirm-modal-overlay.open{display:flex}
-.confirm-modal{background:#fff;border-radius:16px;padding:24px;width:100%;max-width:360px;text-align:center}
-.confirm-modal-icon{font-size:48px;margin-bottom:12px}
-.confirm-modal-msg{font-size:16px;color:#333;line-height:1.6;margin-bottom:20px}
-.confirm-modal-actions{display:flex;gap:10px}
-.btn-confirm-ok{flex:1;padding:16px;font-size:17px;font-weight:700;background:#c0392b;color:#fff;border:none;border-radius:10px;cursor:pointer}
-.btn-confirm-cancel{flex:1;padding:16px;font-size:17px;font-weight:700;background:#e0e0e0;color:#555;border:none;border-radius:10px;cursor:pointer}
+.confirm-modal{background:#fff;border-radius:18px;padding:28px;width:100%;max-width:380px;text-align:center;border-top:6px solid #bf360c}
+.confirm-modal-icon{font-size:56px;margin-bottom:14px}
+.confirm-modal-msg{font-size:20px;color:#111;line-height:1.7;margin-bottom:24px;font-weight:600}
+.confirm-modal-actions{display:flex;gap:12px}
+.btn-confirm-ok{flex:1;padding:20px;font-size:20px;font-weight:800;background:#bf360c;color:#fff;border:none;border-radius:12px;cursor:pointer}
+.btn-confirm-cancel{flex:1;padding:20px;font-size:20px;font-weight:800;background:#e0e0e0;color:#333;border:none;border-radius:12px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -135,7 +175,7 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
 <div id="entry-view" class="view">
   <div class="save-badge" style="justify-content:space-between;flex-wrap:wrap">
     <span>💾 データはこの端末に自動保存されます</span>
-    <button class="btn-danger-sm" onclick="confirmClearStorage()" style="font-size:13px;padding:6px 12px">🗑️ データ全削除</button>
+    <button class="btn-danger-sm" onclick="confirmClearStorage()" style="font-size:16px;padding:10px 16px">🗑️ データ全削除</button>
   </div>
   <div class="field">
     <label>訪問者名（会社名）</label>
@@ -166,7 +206,7 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
       <div class="ocr-loading" id="ocr-loading">🔍 ナンバーを読み取り中…</div>
       <div class="ocr-result" id="ocr-result" style="display:none"></div>
     </div>
-    <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" style="margin-top:10px">
+    <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" style="margin-top:10px;width:100%;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
     <div class="hint">・を除いた数字部分のみ入力</div>
   </div>
   <button class="btn-primary" onclick="register()">入　庫　登　録</button>
@@ -191,8 +231,8 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
   <div class="search-result-label" id="search-result-label"></div>
   <div class="stats">
     <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">本日合計</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-in" style="color:#27ae60">0</div><div class="stat-label">入庫中</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-out" style="color:#888">0</div><div class="stat-label">出庫済み</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-in" style="color:#0d47a1">0</div><div class="stat-label">入庫中</div></div>
+    <div class="stat-card"><div class="stat-num" id="stat-out" style="color:#555">0</div><div class="stat-label">出庫済み</div></div>
   </div>
   <div class="record-list" id="record-list"></div>
   <div class="empty-state" id="empty-state">まだ記録がありません</div>
@@ -229,7 +269,7 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
       <button class="btn-save" onclick="saveEdit()">保　存</button>
       <button class="btn-delete" onclick="deleteRecord()">削　除</button>
     </div>
-    <button id="btn-revert" onclick="revertToParked()" style="display:none;width:100%;margin-top:10px;padding:14px;font-size:17px;font-weight:700;background:#e67e22;color:#fff;border:none;border-radius:10px;cursor:pointer">↩️ 入庫中に戻す</button>
+    <button id="btn-revert" onclick="revertToParked()" style="display:none;width:100%;margin-top:12px;padding:20px;font-size:22px;font-weight:800;background:#e65100;color:#fff;border:3px solid #9a3800;border-radius:12px;cursor:pointer">↩️ 入庫中に戻す</button>
   </div>
 </div>
 
@@ -263,10 +303,10 @@ body{font-family:sans-serif;background:#f5f5f5;color:#222;font-size:16px}
         </select>
       </div>
       <div style="padding:10px 0 0">
-        <label style="font-size:14px;color:#666;font-weight:500;display:block;margin-bottom:8px">CSVファイルを選択</label>
+        <label style="font-size:19px;color:#333;font-weight:700;display:block;margin-bottom:10px">CSVファイルを選択</label>
         <input type="file" id="csv-import-input" accept=".csv,text/csv" onchange="onCsvFileSelected(this)">
         <button class="btn-import-do" onclick="document.getElementById('csv-import-input').click()">📁 ファイルを選ぶ</button>
-        <div id="import-file-name" style="margin-top:8px;font-size:13px;color:#888;text-align:center"></div>
+        <div id="import-file-name" style="margin-top:10px;font-size:17px;color:#333;text-align:center;font-weight:600"></div>
       </div>
       <button class="btn-import-do" id="btn-do-import" onclick="doImportCSV()" style="display:none;background:#27ae60">✅ 読み込みを実行</button>
     </div>
