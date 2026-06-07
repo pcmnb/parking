@@ -376,7 +376,8 @@ async function handlePhoto(inp){
   reader.onload=async e=>{
     img.src=e.target.result;
     const b64=e.target.result.split(',')[1];
-    const num=await ocrPlate(b64);
+    const mediaType=file.type||'image/jpeg';
+    const num=await ocrPlate(b64,mediaType);
     loading.style.display='none';
     if(num){
       document.getElementById('plate-number').value=num;
@@ -390,20 +391,14 @@ async function handlePhoto(inp){
   reader.readAsDataURL(file);
 }
 
-async function ocrPlate(b64){
+async function ocrPlate(b64,mediaType){
   try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
+    const res=await fetch('https://us-central1-parking-2bd69.cloudfunctions.net/ocrPlate',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:100,
-        messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-          {type:'text',text:'この画像はナンバープレートです。ナンバープレートの数字部分（・を除いた1〜4桁の数字のみ）を抽出してください。数字のみを返してください。数字が読み取れない場合は「不明」とだけ返してください。'}
-        ]}]})
+      body:JSON.stringify({b64,mediaType:mediaType||'image/jpeg'})
     });
     const data=await res.json();
-    const text=(data.content&&data.content[0]&&data.content[0].text)||'';
-    const match=text.match(/\d{1,4}/);
-    return match?match[0]:null;
+    return data.number||null;
   }catch(e){return null;}
 }
 
