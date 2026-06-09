@@ -1,7 +1,8 @@
 # 車両入出庫管理アプリ 設計書
 
-**バージョン**: 1.0  
+**バージョン**: 1.1  
 **作成日**: 2026-06-10  
+**更新日**: 2026-06-10（セキュリティ修正）  
 **対象リポジトリ**: https://github.com/pcmnb/parking
 
 ---
@@ -190,13 +191,49 @@ GPT-5.5（画像解析）
 
 ## 6. セキュリティ設計
 
-| 脅威 | 対策 |
-|---|---|
-| APIキー漏洩 | フロントエンドにAPIキーを置かず、Cloud Functionsプロキシ経由のみでアクセス |
-| 大量リクエスト | `maxInstances: 10` で上限設定。将来的にレートリミット追加を推奨 |
-| 不正なbase64データ | Cloud Functions側でAPIキーの有無・画像データの有無を検証 |
-| XSS | innerHTML へのユーザー入力は `r.name`, `r.dest`, `r.plate` のみ。plate は数字のみ検証済み。name/dest は登録時にtrimのみ（エスケープなし → 将来対応推奨） |
-| データ漏洩 | データはlocalStorageのみ。サーバーへのデータ送信なし（画像のみ送信） |
+| 脅威 | 対策 | 状態 |
+|---|---|---|
+| APIキー漏洩 | フロントエンドにAPIキーを置かず、Cloud Functionsプロキシ経由のみでアクセス | 対応済み |
+| 大量リクエスト | `maxInstances: 10` で上限設定。将来的にレートリミット追加を推奨 | 部分対応 |
+| 不正なbase64データ | Cloud Functions側でAPIキーの有無・画像データの有無を検証 | 対応済み |
+| XSS | `esc()` 関数で `r.name` / `r.dest` をHTMLエスケープして innerHTML に埋め込む | **対応済み** |
+| APIエンドポイント不正利用 | CORS を許可オリジンのみに制限 + サーバー側Originヘッダーチェックで403返却 | **対応済み** |
+| データ漏洩 | データはlocalStorageのみ。サーバーへのデータ送信なし（画像のみ送信） | 対応済み |
+
+### 6.1 XSS対策の実装（2026-06-10 追加）
+
+`index.html` の `renderList()` 関数内で、ユーザー入力値を innerHTML に埋め込む際に `esc()` 関数を適用する。
+
+```javascript
+function esc(s){
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+```
+
+**エスケープ対象**: `r.name`（訪問者名）、`r.dest`（訪問先） — 計4箇所  
+**エスケープ不要**: `r.plate`（数字バリデーション済み）、`r.date` / `r.inTime` / `r.outTime`（システム生成）
+
+### 6.2 Cloud Functions オリジン制限（2026-06-10 追加）
+
+許可するオリジンを定数で管理し、2層でチェックする。
+
+```javascript
+const ALLOWED_ORIGINS = [
+  "https://pcmnb.github.io",   // 本番（GitHub Pages）
+  "http://localhost:5000",      // ローカル開発（Firebase Emulator）
+  "http://127.0.0.1:5000",
+];
+```
+
+| 層 | 仕組み | 効果 |
+|---|---|---|
+| `cors: ALLOWED_ORIGINS` | ブラウザのプリフライトを許可オリジンのみに制限 | 許可外ドメインのブラウザからの呼び出しをブロック |
+| Originヘッダーチェック | リクエストの `origin` ヘッダーを検証し不一致なら403返却 | curl等の直接HTTPリクエストもブロック |
 
 ---
 
