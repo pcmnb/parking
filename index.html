@@ -332,6 +332,8 @@ const STORAGE_KEY='parking_records';
 let records=[];
 let editingId=null;
 
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
 let touchStartY=0;
 let touchMoved=false;
 function touchStart(e){
@@ -557,10 +559,10 @@ function renderList(){
     list.innerHTML=matched.map(r=>`
       <div class="record-card search-match" ontouchstart="touchStart(event)" ontouchend="touchEnd(event,${r.id})" onclick="openEdit(${r.id})" style="-webkit-tap-highlight-color:rgba(26,86,160,0.15);cursor:pointer">
         <div class="record-card-top">
-          <span class="record-name">${r.name}</span>
+          <span class="record-name">${esc(r.name)}</span>
           <span class="plate-num">${r.plate}</span>
         </div>
-        <div class="record-card-mid">訪問先：${r.dest||'—'} ／ 📅 ${r.date}</div>
+        <div class="record-card-mid">訪問先：${esc(r.dest)||'—'} ／ 📅 ${r.date}</div>
         <div class="record-card-bot">
           <span class="time-info">入庫 ${r.inTime}${r.outTime?' ／ 出庫 '+r.outTime:''}</span>
           ${r.outTime
@@ -585,10 +587,10 @@ function renderList(){
   list.innerHTML=todays.map(r=>`
     <div class="record-card" ontouchstart="touchStart(event)" ontouchend="touchEnd(event,${r.id})" onclick="openEdit(${r.id})" style="-webkit-tap-highlight-color:rgba(26,86,160,0.15);cursor:pointer">
       <div class="record-card-top">
-        <span class="record-name">${r.name}</span>
+        <span class="record-name">${esc(r.name)}</span>
         <span class="plate-num">${r.plate}</span>
       </div>
-      <div class="record-card-mid">訪問先：${r.dest||'—'}</div>
+      <div class="record-card-mid">訪問先：${esc(r.dest)||'—'}</div>
       <div class="record-card-bot">
         <span class="time-info">入庫 ${r.inTime}${r.outTime?' ／ 出庫 '+r.outTime:''}</span>
         ${r.outTime
