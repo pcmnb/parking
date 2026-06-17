@@ -236,7 +236,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   </div>
   <!-- 日付検索 -->
   <div class="search-box" style="margin-bottom:10px">
-    <input type="text" id="search-date" class="search-input" placeholder="例：2026/06/01" maxlength="10" inputmode="numeric" style="letter-spacing:normal;font-size:19px"
+    <input type="text" id="search-date" class="search-input" placeholder="例：20260601 または 2026/06/01" maxlength="10" inputmode="numeric" style="letter-spacing:normal;font-size:19px"
       oninput="onDateSearchInput()">
     <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕ クリア</button>
   </div>
@@ -531,6 +531,10 @@ function deleteRecord(){
 
 function normalizeDate(s){
   if(!s)return null;
+  // YYYYMMDD（8桁）形式
+  const m8=s.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if(m8)return m8[1]+'-'+m8[2]+'-'+m8[3];
+  // YYYY/MM/DD または YYYY-MM-DD 形式
   const m=s.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
   if(!m)return null;
   return m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0');
@@ -561,17 +565,20 @@ function setStatusFilter(mode){
 
 function onDateSearchInput(){
   const el=document.getElementById('search-date');
-  // 数字とセパレータ(/ -)のみ許可し、年4桁・月2桁・日2桁に制限
+  // 数字とセパレータ(/ -)のみ許可
   let v=el.value.replace(/[^0-9\/\-]/g,'');
   const sep=v.indexOf('/')!==-1?'/':(v.indexOf('-')!==-1?'-':null);
   if(sep){
+    // セパレータあり：年4桁・月2桁・日2桁に制限
     const p=v.split(sep);
     p[0]=p[0].slice(0,4);
     if(p[1]!==undefined)p[1]=p[1].slice(0,2);
     if(p[2]!==undefined)p[2]=p[2].slice(0,2);
     v=p.slice(0,3).join(sep);
   }else{
-    v=v.slice(0,4);
+    // セパレータなし：8桁まで許可し、8桁揃ったら自動フォーマット
+    v=v.slice(0,8);
+    if(v.length===8)v=v.slice(0,4)+'/'+v.slice(4,6)+'/'+v.slice(6,8);
   }
   el.value=v;
   document.getElementById('btn-date-clear').style.display=v?'inline-block':'none';
