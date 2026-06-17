@@ -566,8 +566,7 @@ function onDateSearchInput(){
 }
 
 function clearDateSearch(){
-  document.getElementById('search-date').value='';
-  document.getElementById('btn-date-clear').style.display='none';
+  document.getElementById('search-date').value=today();
   renderList();
 }
 
