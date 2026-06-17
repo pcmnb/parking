@@ -236,8 +236,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   </div>
   <!-- 日付検索 -->
   <div class="search-box" style="margin-bottom:10px">
-    <input type="date" id="search-date" class="search-input" style="letter-spacing:normal;font-size:19px"
-      oninput="onDateSearchInput()">
+    <input type="date" id="search-date" class="search-input" placeholder="例：2026/06/01" style="letter-spacing:normal;font-size:19px"
+      onfocus="onDateFocus(this)" oninput="onDateSearchInput()">
     <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕ クリア</button>
   </div>
   <!-- ステータスフィルター -->
@@ -380,7 +380,7 @@ function showView(v){
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(v==='entry'&&i===0)||(v==='list'&&i===1)));
   if(v==='list'){
     const di=document.getElementById('search-date');
-    if(!di.value){di.value=today();document.getElementById('btn-date-clear').style.display='inline-block';}
+    if(!di.value){di.type='date';di.value=today();document.getElementById('btn-date-clear').style.display='inline-block';}
     renderList();
   }
 }
@@ -559,6 +559,10 @@ function setStatusFilter(mode){
   renderList();
 }
 
+function onDateFocus(el){
+  if(el.type==='text'){el.type='date';}
+}
+
 function onDateSearchInput(){
   const val=document.getElementById('search-date').value.trim();
   document.getElementById('btn-date-clear').style.display=val?'inline-block':'none';
@@ -566,7 +570,10 @@ function onDateSearchInput(){
 }
 
 function clearDateSearch(){
-  document.getElementById('search-date').value=today();
+  const el=document.getElementById('search-date');
+  el.value='';
+  el.type='text';
+  document.getElementById('btn-date-clear').style.display='none';
   renderList();
 }
 
