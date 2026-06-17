@@ -236,8 +236,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   </div>
   <!-- 日付検索 -->
   <div class="search-box" style="margin-bottom:10px">
-    <input type="date" id="search-date" class="search-input" placeholder="例：2026/06/01" maxlength="10" style="letter-spacing:normal;font-size:19px"
-      onfocus="onDateFocus(this)" oninput="onDateSearchInput()">
+    <input type="text" id="search-date" class="search-input" placeholder="例：2026/06/01" maxlength="10" inputmode="numeric" style="letter-spacing:normal;font-size:19px"
+      oninput="onDateSearchInput()">
     <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕ クリア</button>
   </div>
   <!-- ステータスフィルター -->
@@ -380,7 +380,7 @@ function showView(v){
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(v==='entry'&&i===0)||(v==='list'&&i===1)));
   if(v==='list'){
     const di=document.getElementById('search-date');
-    if(!di.value){di.type='date';di.value=today();document.getElementById('btn-date-clear').style.display='inline-block';}
+    if(!di.value){di.value=today();document.getElementById('btn-date-clear').style.display='inline-block';}
     renderList();
   }
 }
@@ -559,30 +559,27 @@ function setStatusFilter(mode){
   renderList();
 }
 
-function onDateFocus(el){
-  if(el.type==='text'){el.type='date';}
-}
-
 function onDateSearchInput(){
   const el=document.getElementById('search-date');
-  // type="date" 時：年が4桁を超えたら先頭4桁に訂正
-  if(el.type==='date'&&el.value){
-    const p=el.value.split('-');
-    if(p[0]&&p[0].length>4){p[0]=p[0].slice(0,4);el.value=p.join('-');}
+  // 数字とセパレータ(/ -)のみ許可し、年4桁・月2桁・日2桁に制限
+  let v=el.value.replace(/[^0-9\/\-]/g,'');
+  const sep=v.indexOf('/')!==-1?'/':(v.indexOf('-')!==-1?'-':null);
+  if(sep){
+    const p=v.split(sep);
+    p[0]=p[0].slice(0,4);
+    if(p[1]!==undefined)p[1]=p[1].slice(0,2);
+    if(p[2]!==undefined)p[2]=p[2].slice(0,2);
+    v=p.slice(0,3).join(sep);
+  }else{
+    v=v.slice(0,4);
   }
-  // type="text" 時：年の先頭連続数字を4桁に制限
-  if(el.type==='text'&&el.value){
-    el.value=el.value.replace(/^(\d{5,})/,m=>m.slice(0,4));
-  }
-  const val=el.value.trim();
-  document.getElementById('btn-date-clear').style.display=val?'inline-block':'none';
+  el.value=v;
+  document.getElementById('btn-date-clear').style.display=v?'inline-block':'none';
   renderList();
 }
 
 function clearDateSearch(){
-  const el=document.getElementById('search-date');
-  el.value='';
-  el.type='text';
+  document.getElementById('search-date').value='';
   document.getElementById('btn-date-clear').style.display='none';
   renderList();
 }
