@@ -236,7 +236,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   </div>
   <!-- 日付検索 -->
   <div class="search-box" style="margin-bottom:10px">
-    <input type="date" id="search-date" class="search-input" placeholder="例：2026/06/01" style="letter-spacing:normal;font-size:19px"
+    <input type="date" id="search-date" class="search-input" placeholder="例：2026/06/01" maxlength="10" style="letter-spacing:normal;font-size:19px"
       onfocus="onDateFocus(this)" oninput="onDateSearchInput()">
     <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕ クリア</button>
   </div>
@@ -564,7 +564,17 @@ function onDateFocus(el){
 }
 
 function onDateSearchInput(){
-  const val=document.getElementById('search-date').value.trim();
+  const el=document.getElementById('search-date');
+  // type="date" 時：年が4桁を超えたら先頭4桁に訂正
+  if(el.type==='date'&&el.value){
+    const p=el.value.split('-');
+    if(p[0]&&p[0].length>4){p[0]=p[0].slice(0,4);el.value=p.join('-');}
+  }
+  // type="text" 時：年の先頭連続数字を4桁に制限
+  if(el.type==='text'&&el.value){
+    el.value=el.value.replace(/^(\d{5,})/,m=>m.slice(0,4));
+  }
+  const val=el.value.trim();
   document.getElementById('btn-date-clear').style.display=val?'inline-block':'none';
   renderList();
 }
