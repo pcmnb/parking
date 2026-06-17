@@ -141,9 +141,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
 /* ===== ステータスフィルターボタン ===== */
 .filter-btn-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
 .btn-filter{padding:12px 18px;font-size:18px;font-weight:700;background:#e0e0e0;color:#444;border:2px solid #bbb;border-radius:10px;cursor:pointer}
-.btn-filter.f-active{background:#0d47a1;color:#fff;border-color:#0d47a1}
-.btn-filter.f-active-in{background:#e3f2fd;color:#0d47a1;border-color:#0d47a1;font-weight:800}
-.btn-filter.f-active-out{background:#e8e8e8;color:#555;border-color:#999;font-weight:800}
+.btn-filter.f-active{background:#0d47a1;color:#fff;border-color:#0d47a1;font-weight:800}
 
 /* ===== CSV読み込み・ストレージ削除 ===== */
 .btn-import{padding:14px 20px;font-size:18px;font-weight:800;background:#5e35b1;color:#fff;border:none;border-radius:10px;cursor:pointer}
@@ -245,8 +243,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   <!-- ステータスフィルター -->
   <div class="filter-btn-row">
     <button id="btn-filter-all" class="btn-filter f-active" onclick="setStatusFilter('all')">すべて</button>
-    <button id="btn-filter-in" class="btn-filter" onclick="setStatusFilter('in')">🔵 入庫中</button>
-    <button id="btn-filter-out" class="btn-filter" onclick="setStatusFilter('out')">⚪ 出庫済み</button>
+    <button id="btn-filter-in" class="btn-filter" onclick="setStatusFilter('in')">入庫中</button>
+    <button id="btn-filter-out" class="btn-filter" onclick="setStatusFilter('out')">出庫済み</button>
   </div>
   <div class="search-result-label" id="search-result-label"></div>
   <div class="stats">
@@ -556,8 +554,8 @@ function autofillFromPlate(){
 function setStatusFilter(mode){
   statusFilter=mode;
   document.getElementById('btn-filter-all').className='btn-filter'+(mode==='all'?' f-active':'');
-  document.getElementById('btn-filter-in').className='btn-filter'+(mode==='in'?' f-active-in':'');
-  document.getElementById('btn-filter-out').className='btn-filter'+(mode==='out'?' f-active-out':'');
+  document.getElementById('btn-filter-in').className='btn-filter'+(mode==='in'?' f-active':'');
+  document.getElementById('btn-filter-out').className='btn-filter'+(mode==='out'?' f-active':'');
   renderList();
 }
 
@@ -599,11 +597,13 @@ function renderList(){
   const hasDateFilter=!!searchDate;
   const hasStatusFilter=statusFilter!=='all';
   const hasAnyFilter=hasPlateFilter||hasDateFilter||hasStatusFilter;
+  // 初期表示判定：日付=今日・すべて・ナンバー未入力 → 通常の今日表示
+  const isDefaultView=hasDateFilter&&searchDate===td&&!hasStatusFilter&&!hasPlateFilter;
   const resultLabel=document.getElementById('search-result-label');
   let filtered;
 
   if(!hasAnyFilter){
-    // 通常モード（今日のデータのみ）
+    // 日付が空の場合（クリア後など）→ 今日のデータ
     filtered=records.filter(r=>r.date===td);
     document.getElementById('today-label').textContent=todayJP();
     resultLabel.style.display='none';
@@ -618,7 +618,7 @@ function renderList(){
       filtered=filtered.filter(r=>effectiveVal?(startsWithZero?r.plate===effectiveVal:r.plate.includes(effectiveVal)):false);
     }
 
-    // 日付フィルター
+    // 日付フィルター（入庫日時基準）
     if(hasDateFilter)filtered=filtered.filter(r=>r.date===searchDate);
 
     // ステータスフィルター
@@ -627,16 +627,22 @@ function renderList(){
 
     filtered.sort((a,b)=>a.date.localeCompare(b.date)||a.inTime.localeCompare(b.inTime));
 
-    // ヘッダーラベル
-    let parts=[];
-    if(searchPlate==='0000')parts.push('全データ');
-    else if(hasPlateFilter){const ev=searchPlate.replace(/^0+/,'');if(ev)parts.push('ナンバー:'+ev);}
-    if(hasDateFilter)parts.push(searchDate);
-    if(statusFilter==='in')parts.push('入庫中のみ');
-    else if(statusFilter==='out')parts.push('出庫済みのみ');
-    document.getElementById('today-label').textContent='🔍 '+(parts.join(' ／ ')||'絞り込み中');
-    resultLabel.style.display='block';
-    resultLabel.textContent=filtered.length?filtered.length+'件が見つかりました':'該当するデータがありません';
+    if(isDefaultView){
+      // 初期表示は今日の日付ヘッダーのみ（検索ラベル非表示）
+      document.getElementById('today-label').textContent=todayJP();
+      resultLabel.style.display='none';
+    }else{
+      // 絞り込み中のヘッダーとラベル
+      let parts=[];
+      if(searchPlate==='0000')parts.push('全データ');
+      else if(hasPlateFilter){const ev=searchPlate.replace(/^0+/,'');if(ev)parts.push('ナンバー:'+ev);}
+      if(hasDateFilter)parts.push(searchDate===td?'今日 '+searchDate:searchDate);
+      if(statusFilter==='in')parts.push('入庫中のみ');
+      else if(statusFilter==='out')parts.push('出庫済みのみ');
+      document.getElementById('today-label').textContent='🔍 '+(parts.join(' ／ ')||'絞り込み中');
+      resultLabel.style.display='block';
+      resultLabel.textContent=filtered.length?filtered.length+'件が見つかりました':'該当するデータがありません';
+    }
   }
 
   document.getElementById('stat-total').textContent=filtered.length;
@@ -646,13 +652,14 @@ function renderList(){
   const empty=document.getElementById('empty-state');
   if(!filtered.length){list.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
+  const showDate=hasAnyFilter&&!isDefaultView;
   list.innerHTML=filtered.map(r=>`
-    <div class="record-card${hasAnyFilter?' search-match':''}" ontouchstart="touchStart(event)" ontouchend="touchEnd(event,${r.id})" onclick="openEdit(${r.id})" style="-webkit-tap-highlight-color:rgba(26,86,160,0.15);cursor:pointer">
+    <div class="record-card${showDate?' search-match':''}" ontouchstart="touchStart(event)" ontouchend="touchEnd(event,${r.id})" onclick="openEdit(${r.id})" style="-webkit-tap-highlight-color:rgba(26,86,160,0.15);cursor:pointer">
       <div class="record-card-top">
         <span class="record-name">${esc(r.name)}</span>
         <span class="plate-num">${r.plate}</span>
       </div>
-      <div class="record-card-mid">訪問先：${esc(r.dest)||'—'}${hasAnyFilter?' ／ 📅 '+r.date:''}</div>
+      <div class="record-card-mid">訪問先：${esc(r.dest)||'—'}${showDate?' ／ 📅 '+r.date:''}</div>
       <div class="record-card-bot">
         <span class="time-info">入庫 ${r.inTime}${r.outTime?' ／ 出庫 '+r.outTime:''}</span>
         ${r.outTime
