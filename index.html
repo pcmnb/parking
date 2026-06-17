@@ -238,8 +238,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   </div>
   <!-- 日付検索 -->
   <div class="search-box" style="margin-bottom:10px">
-    <input type="text" id="search-date" class="search-input" placeholder="📅 日付検索（例: 2026-06-17）" style="letter-spacing:normal;font-size:19px"
-      oninput="onDateSearchInput()" onkeydown="if(event.key==='Enter')document.activeElement.blur()">
+    <input type="date" id="search-date" class="search-input" style="letter-spacing:normal;font-size:19px"
+      oninput="onDateSearchInput()">
     <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕ クリア</button>
   </div>
   <!-- ステータスフィルター -->
@@ -380,7 +380,11 @@ function showView(v){
   document.getElementById('entry-view').style.display=v==='entry'?'block':'none';
   document.getElementById('list-view').style.display=v==='list'?'block':'none';
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(v==='entry'&&i===0)||(v==='list'&&i===1)));
-  if(v==='list')renderList();
+  if(v==='list'){
+    const di=document.getElementById('search-date');
+    if(!di.value){di.value=today();document.getElementById('btn-date-clear').style.display='inline-block';}
+    renderList();
+  }
 }
 
 function toast(msg){
@@ -809,6 +813,8 @@ function doImportCSV(){
   reader.readAsText(importFile,'UTF-8');
 }
 
+document.getElementById('search-date').value=today();
+document.getElementById('btn-date-clear').style.display='inline-block';
 renderList();
 </script>
 </body>
