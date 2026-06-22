@@ -234,6 +234,12 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
       oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
     <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕ クリア</button>
   </div>
+  <!-- 訪問者名検索 -->
+  <div class="search-box">
+    <input type="text" id="search-name" class="search-input" placeholder="🔍 訪問者名で検索" style="letter-spacing:normal;font-size:19px"
+      oninput="onNameSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="btn-search-clear" id="btn-name-clear" onclick="clearNameSearch()" style="display:none">✕ クリア</button>
+  </div>
   <!-- 日付検索 -->
   <div class="search-box" style="margin-bottom:10px">
     <input type="text" id="search-date" class="search-input" placeholder="例：20260601 または 2026/06/01" maxlength="10" inputmode="numeric" style="letter-spacing:normal;font-size:19px"
@@ -630,17 +636,29 @@ function clearSearch(){
   renderList();
 }
 
+function onNameSearchInput(){
+  const val=document.getElementById('search-name').value.trim();
+  document.getElementById('btn-name-clear').style.display=val?'inline-block':'none';
+  renderList();
+}
+function clearNameSearch(){
+  document.getElementById('search-name').value='';
+  document.getElementById('btn-name-clear').style.display='none';
+  renderList();
+}
+
 function renderList(){
   const td=today();
   const searchPlate=document.getElementById('search-plate').value.trim();
+  const searchName=document.getElementById('search-name').value.trim();
   const searchDateRaw=document.getElementById('search-date').value.trim();
   const searchDate=normalizeDate(searchDateRaw);
   const hasPlateFilter=searchPlate.length>0;
+  const hasNameFilter=searchName.length>0;
   const hasDateFilter=!!searchDate;
   const hasStatusFilter=statusFilter!=='all';
-  const hasAnyFilter=hasPlateFilter||hasDateFilter||hasStatusFilter;
-  // 初期表示判定：日付=今日・すべて・ナンバー未入力 → 通常の今日表示
-  const isDefaultView=hasDateFilter&&searchDate===td&&!hasStatusFilter&&!hasPlateFilter;
+  const hasAnyFilter=hasPlateFilter||hasNameFilter||hasDateFilter||hasStatusFilter;
+  const isDefaultView=hasDateFilter&&searchDate===td&&!hasStatusFilter&&!hasPlateFilter&&!hasNameFilter;
   const resultLabel=document.getElementById('search-result-label');
   let filtered;
 
@@ -658,6 +676,12 @@ function renderList(){
       const startsWithZero=searchPlate.startsWith('0');
       const effectiveVal=searchPlate.replace(/^0+/,'');
       filtered=filtered.filter(r=>effectiveVal?(startsWithZero?r.plate===effectiveVal:r.plate.includes(effectiveVal)):false);
+    }
+
+    // 訪問者名フィルター（部分一致・大文字小文字区別なし）
+    if(hasNameFilter){
+      const q=searchName.toLowerCase();
+      filtered=filtered.filter(r=>r.name.toLowerCase().includes(q));
     }
 
     // 日付フィルター（入庫日時基準）
@@ -678,6 +702,7 @@ function renderList(){
       let parts=[];
       if(searchPlate==='0000')parts.push('全データ');
       else if(hasPlateFilter){const ev=searchPlate.replace(/^0+/,'');if(ev)parts.push('ナンバー:'+ev);}
+      if(hasNameFilter)parts.push('訪問者:'+searchName);
       if(hasDateFilter)parts.push(searchDate===td?'今日 '+searchDate:searchDate);
       if(statusFilter==='in')parts.push('入庫中のみ');
       else if(statusFilter==='out')parts.push('出庫済みのみ');
