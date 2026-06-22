@@ -446,6 +446,8 @@ function register(){
   const dest=document.getElementById('destination').value.trim();
   const plate=document.getElementById('plate-number').value.trim();
   if(!plate||!/^\d{1,4}$/.test(plate)){toast('ナンバーを1〜4桁の数字で入力してください');return;}
+  const alreadyIn=records.find(r=>r.plate===plate&&!r.outTime);
+  if(alreadyIn){toast('⚠️ このナンバーはすでに入庫中です');return;}
   const finalName=name||'不明';
   const finalDest=dest||'不明';
   document.activeElement.blur();
@@ -545,13 +547,33 @@ function autofillFromPlate(){
   autofillTimer=setTimeout(()=>{
     const plate=document.getElementById('plate-number').value.trim();
     if(!plate||!/^\d{1,4}$/.test(plate))return;
+
+    const alreadyIn=records.find(r=>r.plate===plate&&!r.outTime);
+    if(alreadyIn){
+      toast('⚠️ このナンバーはすでに入庫中です');
+      return;
+    }
+
     const matched=records.filter(r=>r.plate===plate);
     if(!matched.length)return;
     const latest=[...matched].sort((a,b)=>(b.date+'T'+b.inTime).localeCompare(a.date+'T'+a.inTime))[0];
-    let filled=false;
-    if(latest.name&&latest.name!=='不明'){document.getElementById('visitor-name').value=latest.name;filled=true;}
-    if(latest.dest){document.getElementById('destination').value=latest.dest;filled=true;}
-    if(filled)toast('📋 訪問者名・訪問先を自動入力しました');
+    const autoName=(latest.name&&latest.name!=='不明')?latest.name:'不明';
+    const autoDest=latest.dest||'不明';
+    document.getElementById('visitor-name').value=autoName!=='不明'?autoName:'';
+    document.getElementById('destination').value=autoDest!=='不明'?autoDest:'';
+
+    document.activeElement.blur();
+    records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name:autoName,dest:autoDest,plate});
+    saveRecords();
+    document.getElementById('visitor-name').value='';
+    document.getElementById('destination').value='';
+    document.getElementById('plate-number').value='';
+    document.getElementById('preview-wrap').style.display='none';
+    document.getElementById('ocr-result').style.display='none';
+    const msg=document.getElementById('success-msg');
+    msg.textContent='✅ 過去データから自動入庫しました（'+autoName+'）';
+    msg.style.display='block';
+    setTimeout(()=>{msg.style.display='none';msg.textContent='✅ 入庫登録が完了しました！';},3000);
   },300);
 }
 
