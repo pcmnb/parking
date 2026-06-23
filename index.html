@@ -184,14 +184,6 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
     <button class="btn-danger-sm" onclick="confirmClearStorage()" style="font-size:16px;padding:10px 16px">🗑️ データ全削除</button>
   </div>
   <div class="field">
-    <label>訪問者名（会社名）</label>
-    <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社">
-  </div>
-  <div class="field">
-    <label>訪問先（担当部署・担当者）</label>
-    <input type="text" id="destination" placeholder="例：営業部 鈴木">
-  </div>
-  <div class="field">
     <label>ナンバープレート</label>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
       <div class="camera-area" style="margin-bottom:0" onclick="document.getElementById('camera-input').click()">
@@ -216,6 +208,14 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
     <div class="hint">・を除いた数字部分のみ入力</div>
   </div>
   <button class="btn-primary" onclick="register()">入　庫　登　録</button>
+  <div class="field" style="margin-top:24px">
+    <label>訪問者名（会社名）</label>
+    <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社">
+  </div>
+  <div class="field">
+    <label>訪問先（担当部署・担当者）</label>
+    <input type="text" id="destination" placeholder="例：営業部 鈴木">
+  </div>
   <div id="success-msg">✅ 入庫登録が完了しました！</div>
 </div>
 
