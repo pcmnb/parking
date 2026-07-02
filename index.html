@@ -556,6 +556,10 @@ function autofillFromPlate(){
 
     const alreadyIn=records.find(r=>r.plate===plate&&!r.outTime);
     if(alreadyIn){
+      const autoName=(alreadyIn.name&&alreadyIn.name!=='不明')?alreadyIn.name:'';
+      const autoDest=(alreadyIn.dest&&alreadyIn.dest!=='不明')?alreadyIn.dest:'';
+      document.getElementById('visitor-name').value=autoName;
+      document.getElementById('destination').value=autoDest;
       toast('⚠️ このナンバーはすでに入庫中です');
       return;
     }
