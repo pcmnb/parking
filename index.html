@@ -135,6 +135,11 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
 .search-input{flex:1;padding:16px 18px;font-size:22px;border:3px solid #aaa;border-radius:12px;background:#fff;color:#111;font-family:monospace;letter-spacing:3px}
 .search-input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.2)}
 .btn-search-clear{padding:14px 18px;font-size:18px;font-weight:800;background:#ccc;color:#111;border:none;border-radius:10px;cursor:pointer;white-space:nowrap}
+
+/* ===== 音声入力ボタン ===== */
+.btn-mic{padding:14px 18px;font-size:22px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:10px;cursor:pointer;white-space:nowrap;line-height:1}
+.btn-mic.listening{background:#e65100;animation:mic-pulse 1s infinite}
+@keyframes mic-pulse{0%{box-shadow:0 0 0 0 rgba(230,81,0,.5)}70%{box-shadow:0 0 0 10px rgba(230,81,0,0)}100%{box-shadow:0 0 0 0 rgba(230,81,0,0)}}
 .search-result-label{font-size:19px;color:#0d47a1;font-weight:800;background:#e3f2fd;border-radius:10px;padding:10px 16px;margin-bottom:12px;display:none;border-left:5px solid #0d47a1}
 .record-card.search-match{border:3px solid #0d47a1;background:#f0f7ff}
 
@@ -204,8 +209,11 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
       <div class="ocr-loading" id="ocr-loading">🔍 ナンバーを読み取り中…</div>
       <div class="ocr-result" id="ocr-result" style="display:none"></div>
     </div>
-    <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate()" style="margin-top:10px;width:100%;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
-    <div class="hint">・を除いた数字部分のみ入力</div>
+    <div style="display:flex;gap:10px;margin-top:10px">
+      <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate()" style="flex:1;width:auto;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
+      <button type="button" class="btn-mic" id="mic-plate-number" onclick="startVoiceInput('plate-number',this)">🎤</button>
+    </div>
+    <div class="hint">・を除いた数字部分のみ入力（🎤で音声入力も可能）</div>
   </div>
   <button class="btn-primary" onclick="register()">入　庫　登　録</button>
   <div class="field" style="margin-top:24px">
@@ -232,6 +240,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   <div class="search-box">
     <input type="text" id="search-plate" class="search-input" placeholder="🔍 ナンバーで検索" inputmode="numeric" maxlength="4"
       oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
+    <button type="button" class="btn-mic" id="mic-search-plate" onclick="startVoiceInput('search-plate',this)">🎤</button>
     <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕ クリア</button>
   </div>
   <!-- 訪問者名検索 -->
@@ -279,7 +288,10 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
     </div>
     <div class="modal-field">
       <label>ナンバー（数字のみ）</label>
-      <input type="text" id="edit-plate" inputmode="numeric" maxlength="4">
+      <div style="display:flex;gap:10px">
+        <input type="text" id="edit-plate" inputmode="numeric" maxlength="4" style="flex:1">
+        <button type="button" class="btn-mic" id="mic-edit-plate" onclick="startVoiceInput('edit-plate',this)">🎤</button>
+      </div>
     </div>
     <div class="modal-field">
       <label>入庫時刻</label>
@@ -358,6 +370,45 @@ let statusFilter='all';
 let autofillTimer=null;
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ===== ナンバー音声入力 =====
+function normalizeDigits(s){
+  return s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[^0-9]/g,'');
+}
+
+function startVoiceInput(targetId,btn){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){toast('この端末・ブラウザは音声入力に対応していません');return;}
+  if(btn.classList.contains('listening'))return;
+  const input=document.getElementById(targetId);
+  const recognition=new SR();
+  recognition.lang='ja-JP';
+  recognition.interimResults=false;
+  recognition.maxAlternatives=1;
+  btn.classList.add('listening');
+  btn.textContent='🔴';
+  recognition.onresult=function(e){
+    const transcript=e.results[0][0].transcript;
+    const digits=normalizeDigits(transcript).slice(0,4);
+    if(digits){
+      input.value=digits;
+      input.dispatchEvent(new Event('input',{bubbles:true}));
+    }else{
+      toast('数字を認識できませんでした：「'+transcript+'」');
+    }
+  };
+  recognition.onerror=function(e){
+    if(e.error!=='aborted'&&e.error!=='no-speech')toast('音声入力に失敗しました');
+  };
+  recognition.onend=function(){
+    btn.classList.remove('listening');
+    btn.textContent='🎤';
+  };
+  try{recognition.start();}catch(err){
+    btn.classList.remove('listening');
+    btn.textContent='🎤';
+  }
+}
 
 let touchStartY=0;
 let touchMoved=false;
