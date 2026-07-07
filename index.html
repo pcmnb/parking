@@ -210,19 +210,26 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
       <div class="ocr-result" id="ocr-result" style="display:none"></div>
     </div>
     <div style="display:flex;gap:10px;margin-top:10px">
-      <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate()" style="flex:1;width:auto;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
+      <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate();toggleClearBtn(this)" style="flex:1;width:auto;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
       <button type="button" class="btn-mic" id="mic-plate-number" onclick="startVoiceInput('plate-number',this)">🎤</button>
+      <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none">✕</button>
     </div>
     <div class="hint">・を除いた数字部分のみ入力（🎤で音声入力も可能）</div>
   </div>
   <button class="btn-primary" onclick="register()">入　庫　登　録</button>
   <div class="field" style="margin-top:24px">
     <label>訪問者名（会社名）</label>
-    <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社">
+    <div style="display:flex;gap:10px">
+      <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社" oninput="toggleClearBtn(this)" style="flex:1;width:auto">
+      <button type="button" class="btn-search-clear" id="clear-visitor-name" onclick="clearInputField('visitor-name')" style="display:none">✕</button>
+    </div>
   </div>
   <div class="field">
     <label>訪問先（担当部署・担当者）</label>
-    <input type="text" id="destination" placeholder="例：営業部 鈴木">
+    <div style="display:flex;gap:10px">
+      <input type="text" id="destination" placeholder="例：営業部 鈴木" oninput="toggleClearBtn(this)" style="flex:1;width:auto">
+      <button type="button" class="btn-search-clear" id="clear-destination" onclick="clearInputField('destination')" style="display:none">✕</button>
+    </div>
   </div>
   <div id="success-msg">✅ 入庫登録が完了しました！</div>
 </div>
@@ -370,6 +377,20 @@ let statusFilter='all';
 let autofillTimer=null;
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+
+// ===== 入力欄クリアボタン =====
+function toggleClearBtn(el){
+  const btn=document.getElementById('clear-'+el.id);
+  if(btn)btn.style.display=el.value?'inline-block':'none';
+}
+function clearInputField(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.value='';
+  toggleClearBtn(el);
+  el.dispatchEvent(new Event('input',{bubbles:true}));
+  el.focus();
+}
 
 // ===== ナンバー音声入力 =====
 function normalizeDigits(s){
