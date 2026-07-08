@@ -131,15 +131,20 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
 .btn-csv-cancel{width:100%;padding:16px;font-size:19px;font-weight:700;background:#e0e0e0;color:#333;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
 
 /* ===== ナンバー検索 ===== */
-.search-box{display:flex;gap:10px;margin-bottom:16px;align-items:center}
-.search-input{flex:1;padding:16px 18px;font-size:22px;border:3px solid #aaa;border-radius:12px;background:#fff;color:#111;font-family:monospace;letter-spacing:3px}
+.search-box{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center}
+.search-input{flex:1 1 140px;min-width:0;padding:16px 18px;font-size:22px;border:3px solid #aaa;border-radius:12px;background:#fff;color:#111;font-family:monospace;letter-spacing:3px}
 .search-input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.2)}
-.btn-search-clear{padding:14px 18px;font-size:18px;font-weight:800;background:#ccc;color:#111;border:none;border-radius:10px;cursor:pointer;white-space:nowrap}
+.btn-search-clear{padding:14px 18px;font-size:18px;font-weight:800;background:#ccc;color:#111;border:none;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 
 /* ===== 音声入力ボタン ===== */
-.btn-mic{padding:14px 18px;font-size:22px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:10px;cursor:pointer;white-space:nowrap;line-height:1}
+.btn-mic{padding:14px 18px;font-size:22px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:10px;cursor:pointer;white-space:nowrap;line-height:1;flex-shrink:0}
 .btn-mic.listening{background:#e65100;animation:mic-pulse 1s infinite}
 @keyframes mic-pulse{0%{box-shadow:0 0 0 0 rgba(230,81,0,.5)}70%{box-shadow:0 0 0 10px rgba(230,81,0,0)}100%{box-shadow:0 0 0 0 rgba(230,81,0,0)}}
+
+/* ===== 入力欄＋操作ボタン共通レイアウト ===== */
+.field-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.field-row input{flex:1 1 140px;min-width:0;width:auto}
+.input-actions{display:flex;gap:8px;flex-shrink:0}
 .search-result-label{font-size:19px;color:#0d47a1;font-weight:800;background:#e3f2fd;border-radius:10px;padding:10px 16px;margin-bottom:12px;display:none;border-left:5px solid #0d47a1}
 .record-card.search-match{border:3px solid #0d47a1;background:#f0f7ff}
 
@@ -209,25 +214,27 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
       <div class="ocr-loading" id="ocr-loading">🔍 ナンバーを読み取り中…</div>
       <div class="ocr-result" id="ocr-result" style="display:none"></div>
     </div>
-    <div style="display:flex;gap:10px;margin-top:10px">
-      <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate();toggleClearBtn(this)" style="flex:1;width:auto;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
-      <button type="button" class="btn-mic" id="mic-plate-number" onclick="startVoiceInput('plate-number',this)">🎤</button>
-      <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none">✕</button>
+    <div class="field-row" style="margin-top:10px">
+      <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate();toggleClearBtn(this)" style="min-width:120px;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
+      <div class="input-actions">
+        <button type="button" class="btn-mic" id="mic-plate-number" onclick="startVoiceInput('plate-number',this)">🎤</button>
+        <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none">✕</button>
+      </div>
     </div>
     <div class="hint">・を除いた数字部分のみ入力（🎤で音声入力も可能）</div>
   </div>
   <button class="btn-primary" onclick="register()">入　庫　登　録</button>
   <div class="field" style="margin-top:24px">
     <label>訪問者名（会社名）</label>
-    <div style="display:flex;gap:10px">
-      <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社" oninput="toggleClearBtn(this)" style="flex:1;width:auto">
+    <div class="field-row">
+      <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社" oninput="toggleClearBtn(this)">
       <button type="button" class="btn-search-clear" id="clear-visitor-name" onclick="clearInputField('visitor-name')" style="display:none">✕</button>
     </div>
   </div>
   <div class="field">
     <label>訪問先（担当部署・担当者）</label>
-    <div style="display:flex;gap:10px">
-      <input type="text" id="destination" placeholder="例：営業部 鈴木" oninput="toggleClearBtn(this)" style="flex:1;width:auto">
+    <div class="field-row">
+      <input type="text" id="destination" placeholder="例：営業部 鈴木" oninput="toggleClearBtn(this)">
       <button type="button" class="btn-search-clear" id="clear-destination" onclick="clearInputField('destination')" style="display:none">✕</button>
     </div>
   </div>
@@ -247,20 +254,22 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   <div class="search-box">
     <input type="text" id="search-plate" class="search-input" placeholder="🔍 ナンバーで検索" inputmode="numeric" maxlength="4"
       oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
-    <button type="button" class="btn-mic" id="mic-search-plate" onclick="startVoiceInput('search-plate',this)">🎤</button>
-    <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕ クリア</button>
+    <div class="input-actions">
+      <button type="button" class="btn-mic" id="mic-search-plate" onclick="startVoiceInput('search-plate',this)">🎤</button>
+      <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕</button>
+    </div>
   </div>
   <!-- 訪問者名検索 -->
   <div class="search-box">
     <input type="text" id="search-name" class="search-input" placeholder="🔍 訪問者名で検索" style="letter-spacing:normal;font-size:19px"
       oninput="onNameSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
-    <button class="btn-search-clear" id="btn-name-clear" onclick="clearNameSearch()" style="display:none">✕ クリア</button>
+    <button class="btn-search-clear" id="btn-name-clear" onclick="clearNameSearch()" style="display:none">✕</button>
   </div>
   <!-- 日付検索 -->
   <div class="search-box" style="margin-bottom:10px">
     <input type="text" id="search-date" class="search-input" placeholder="例：20260601 または 2026/06/01" maxlength="10" inputmode="numeric" style="letter-spacing:normal;font-size:19px"
       oninput="onDateSearchInput()">
-    <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕ クリア</button>
+    <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕</button>
   </div>
   <!-- ステータスフィルター -->
   <div class="filter-btn-row">
@@ -295,8 +304,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
     </div>
     <div class="modal-field">
       <label>ナンバー（数字のみ）</label>
-      <div style="display:flex;gap:10px">
-        <input type="text" id="edit-plate" inputmode="numeric" maxlength="4" style="flex:1">
+      <div class="field-row">
+        <input type="text" id="edit-plate" inputmode="numeric" maxlength="4">
         <button type="button" class="btn-mic" id="mic-edit-plate" onclick="startVoiceInput('edit-plate',this)">🎤</button>
       </div>
     </div>
