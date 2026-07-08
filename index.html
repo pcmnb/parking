@@ -400,6 +400,8 @@ function normalizeDigits(s){
 function startVoiceInput(targetId,btn){
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
   if(!SR){toast('この端末・ブラウザは音声入力に対応していません');return;}
+  const isSecure=location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
+  if(!isSecure){toast('音声入力はHTTPS接続（またはlocalhost）でのみ利用できます');return;}
   if(btn.classList.contains('listening'))return;
   const input=document.getElementById(targetId);
   const recognition=new SR();
@@ -419,7 +421,16 @@ function startVoiceInput(targetId,btn){
     }
   };
   recognition.onerror=function(e){
-    if(e.error!=='aborted'&&e.error!=='no-speech')toast('音声入力に失敗しました');
+    const messages={
+      'not-allowed':'マイクの使用が許可されていません。ブラウザ設定でこのサイトのマイクアクセスを許可してください。',
+      'service-not-allowed':'マイクの使用が許可されていません。ブラウザ設定でこのサイトのマイクアクセスを許可してください。',
+      'audio-capture':'マイクが見つかりません。マイクが接続・有効になっているか確認してください。',
+      'network':'ネットワークエラーが発生しました。通信状態を確認してください。',
+      'no-speech':null,
+      'aborted':null
+    };
+    const msg=Object.prototype.hasOwnProperty.call(messages,e.error)?messages[e.error]:'音声入力に失敗しました（'+e.error+'）';
+    if(msg)toast(msg);
   };
   recognition.onend=function(){
     btn.classList.remove('listening');
@@ -428,6 +439,7 @@ function startVoiceInput(targetId,btn){
   try{recognition.start();}catch(err){
     btn.classList.remove('listening');
     btn.textContent='🎤';
+    toast('音声入力を開始できませんでした');
   }
 }
 
