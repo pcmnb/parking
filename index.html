@@ -649,21 +649,7 @@ function autofillFromPlate(){
 
     const alreadyIn=records.find(r=>r.plate===plate&&!r.outTime);
     if(alreadyIn){
-      const autoName=(alreadyIn.name&&alreadyIn.name!=='不明')?alreadyIn.name:'不明';
-      const autoDest=(alreadyIn.dest&&alreadyIn.dest!=='不明')?alreadyIn.dest:'不明';
       toast('⚠️ このナンバーはすでに入庫中です');
-      document.activeElement.blur();
-      records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name:autoName,dest:autoDest,plate});
-      saveRecords();
-      document.getElementById('visitor-name').value='';
-      document.getElementById('destination').value='';
-      document.getElementById('plate-number').value='';
-      document.getElementById('preview-wrap').style.display='none';
-      document.getElementById('ocr-result').style.display='none';
-      const msg=document.getElementById('success-msg');
-      msg.textContent='✅ 過去データから自動入庫しました（'+autoName+'）';
-      msg.style.display='block';
-      setTimeout(()=>{msg.style.display='none';msg.textContent='✅ 入庫登録が完了しました！';},3000);
       return;
     }
 
