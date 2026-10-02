@@ -36,20 +36,6 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
 .field input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.25)}
 .field .hint{font-size:18px;color:#555;margin-top:6px;font-weight:500}
 
-/* ===== カメラエリア ===== */
-.camera-area{border:3px dashed #888;border-radius:14px;background:#fafafa;padding:26px 20px;text-align:center;cursor:pointer;margin-bottom:10px}
-.camera-area:active{border-color:#0d47a1;background:#e8f0ff}
-.camera-icon{font-size:56px;margin-bottom:10px;display:block}
-.camera-label{font-size:20px;font-weight:800;color:#0d47a1}
-.camera-hint{font-size:17px;color:#555;margin-top:6px}
-#camera-input{display:none}
-#gallery-input{display:none}
-#preview-wrap{display:none;margin-top:14px}
-#plate-preview{width:100%;max-height:220px;object-fit:contain;border-radius:10px;border:2px solid #ccc}
-.ocr-result{margin-top:12px;padding:14px 18px;background:#e3f2fd;border-radius:10px;border-left:5px solid #0d47a1;font-size:18px;color:#111}
-.ocr-result b{font-size:24px;color:#0d47a1}
-.ocr-loading{display:none;padding:12px;text-align:center;color:#444;font-size:19px}
-
 /* ===== メインボタン ===== */
 .btn-primary{width:100%;padding:26px;font-size:26px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:14px;cursor:pointer;margin-top:10px;letter-spacing:2px;box-shadow:0 4px 0 #083070}
 .btn-primary:active{background:#083070;transform:translateY(3px);box-shadow:none}
@@ -136,15 +122,10 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
 .search-input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.2)}
 .btn-search-clear{padding:14px 18px;font-size:18px;font-weight:800;background:#ccc;color:#111;border:none;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 
-/* ===== 音声入力ボタン ===== */
-.btn-mic{padding:14px 18px;font-size:22px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:10px;cursor:pointer;white-space:nowrap;line-height:1;flex-shrink:0}
-.btn-mic.listening{background:#e65100;animation:mic-pulse 1s infinite}
-@keyframes mic-pulse{0%{box-shadow:0 0 0 0 rgba(230,81,0,.5)}70%{box-shadow:0 0 0 10px rgba(230,81,0,0)}100%{box-shadow:0 0 0 0 rgba(230,81,0,0)}}
 
 /* ===== 入力欄＋操作ボタン共通レイアウト ===== */
 .field-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .field-row input{flex:1 1 140px;min-width:0;width:auto}
-.input-actions{display:flex;gap:8px;flex-shrink:0}
 .search-result-label{font-size:19px;color:#0d47a1;font-weight:800;background:#e3f2fd;border-radius:10px;padding:10px 16px;margin-bottom:12px;display:none;border-left:5px solid #0d47a1}
 .record-card.search-match{border:3px solid #0d47a1;background:#f0f7ff}
 
@@ -195,33 +176,11 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   </div>
   <div class="field">
     <label>ナンバープレート</label>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
-      <div class="camera-area" style="margin-bottom:0" onclick="document.getElementById('camera-input').click()">
-        <span class="camera-icon">📷</span>
-        <div class="camera-label">カメラ撮影</div>
-        <div class="camera-hint">タップして起動</div>
-      </div>
-      <div class="camera-area" style="margin-bottom:0" onclick="document.getElementById('gallery-input').click()">
-        <span class="camera-icon">🖼️</span>
-        <div class="camera-label">写真から選ぶ</div>
-        <div class="camera-hint">フォルダーから選択</div>
-      </div>
-    </div>
-    <input type="file" id="camera-input" accept="image/*" capture="environment" onchange="handlePhoto(this)">
-    <input type="file" id="gallery-input" accept="image/*" onchange="handlePhoto(this)">
-    <div id="preview-wrap">
-      <img id="plate-preview" src="" alt="プレート画像">
-      <div class="ocr-loading" id="ocr-loading">🔍 ナンバーを読み取り中…</div>
-      <div class="ocr-result" id="ocr-result" style="display:none"></div>
-    </div>
     <div class="field-row" style="margin-top:10px">
       <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate();toggleClearBtn(this)" style="min-width:120px;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
-      <div class="input-actions">
-        <button type="button" class="btn-mic" id="mic-plate-number" onclick="startVoiceInput('plate-number',this)">🎤</button>
-        <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none">✕</button>
-      </div>
+      <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none">✕</button>
     </div>
-    <div class="hint">・を除いた数字部分のみ入力（🎤で音声入力も可能）</div>
+    <div class="hint">・を除いた数字部分のみ入力</div>
   </div>
   <button class="btn-primary" onclick="register()">入　庫　登　録</button>
   <div class="field" style="margin-top:24px">
@@ -254,10 +213,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
   <div class="search-box">
     <input type="text" id="search-plate" class="search-input" placeholder="🔍 ナンバーで検索" inputmode="numeric" maxlength="4"
       oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
-    <div class="input-actions">
-      <button type="button" class="btn-mic" id="mic-search-plate" onclick="startVoiceInput('search-plate',this)">🎤</button>
-      <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕</button>
-    </div>
+    <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕</button>
   </div>
   <!-- 訪問者名検索 -->
   <div class="search-box">
@@ -304,10 +260,7 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
     </div>
     <div class="modal-field">
       <label>ナンバー（数字のみ）</label>
-      <div class="field-row">
-        <input type="text" id="edit-plate" inputmode="numeric" maxlength="4">
-        <button type="button" class="btn-mic" id="mic-edit-plate" onclick="startVoiceInput('edit-plate',this)">🎤</button>
-      </div>
+      <input type="text" id="edit-plate" inputmode="numeric" maxlength="4">
     </div>
     <div class="modal-field">
       <label>入庫時刻</label>
@@ -401,57 +354,6 @@ function clearInputField(id){
   el.focus();
 }
 
-// ===== ナンバー音声入力 =====
-function normalizeDigits(s){
-  return s.replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xFEE0)).replace(/[^0-9]/g,'');
-}
-
-function startVoiceInput(targetId,btn){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){toast('この端末・ブラウザは音声入力に対応していません');return;}
-  const isSecure=location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1';
-  if(!isSecure){toast('音声入力はHTTPS接続（またはlocalhost）でのみ利用できます');return;}
-  if(btn.classList.contains('listening'))return;
-  const input=document.getElementById(targetId);
-  const recognition=new SR();
-  recognition.lang='ja-JP';
-  recognition.interimResults=false;
-  recognition.maxAlternatives=1;
-  btn.classList.add('listening');
-  btn.textContent='🔴';
-  recognition.onresult=function(e){
-    const transcript=e.results[0][0].transcript;
-    const digits=normalizeDigits(transcript).slice(0,4);
-    if(digits){
-      input.value=digits;
-      input.dispatchEvent(new Event('input',{bubbles:true}));
-    }else{
-      toast('数字を認識できませんでした：「'+transcript+'」');
-    }
-  };
-  recognition.onerror=function(e){
-    const messages={
-      'not-allowed':'マイクの使用が許可されていません。ブラウザ設定でこのサイトのマイクアクセスを許可してください。',
-      'service-not-allowed':'マイクの使用が許可されていません。ブラウザ設定でこのサイトのマイクアクセスを許可してください。',
-      'audio-capture':'マイクが見つかりません。マイクが接続・有効になっているか確認してください。',
-      'network':'ネットワークエラーが発生しました。通信状態を確認してください。',
-      'no-speech':null,
-      'aborted':null
-    };
-    const msg=Object.prototype.hasOwnProperty.call(messages,e.error)?messages[e.error]:'音声入力に失敗しました（'+e.error+'）';
-    if(msg)toast(msg);
-  };
-  recognition.onend=function(){
-    btn.classList.remove('listening');
-    btn.textContent='🎤';
-  };
-  try{recognition.start();}catch(err){
-    btn.classList.remove('listening');
-    btn.textContent='🎤';
-    toast('音声入力を開始できませんでした');
-  }
-}
-
 let touchStartY=0;
 let touchMoved=false;
 function touchStart(e){
@@ -490,43 +392,6 @@ function toast(msg){
   setTimeout(()=>t.style.display='none',2500);
 }
 
-async function handlePhoto(inp){
-  const file=inp.files[0];if(!file)return;
-  const wrap=document.getElementById('preview-wrap');
-  const img=document.getElementById('plate-preview');
-  const loading=document.getElementById('ocr-loading');
-  const result=document.getElementById('ocr-result');
-  wrap.style.display='block';result.style.display='none';loading.style.display='block';
-  const reader=new FileReader();
-  reader.onload=async e=>{
-    img.src=e.target.result;
-    const b64=e.target.result.split(',')[1];
-    const mediaType=file.type||'image/jpeg';
-    const num=await ocrPlate(b64,mediaType);
-    loading.style.display='none';
-    if(num){
-      document.getElementById('plate-number').value=num;
-      result.style.display='block';
-      result.innerHTML='読み取り結果：<b>'+num+'</b>　<span style="font-size:13px;color:#888">（修正可能）</span>';
-    }else{
-      result.style.display='block';
-      result.innerHTML='<span style="color:#c0392b">読み取りできませんでした。手動で入力してください。</span>';
-    }
-  };
-  reader.readAsDataURL(file);
-}
-
-async function ocrPlate(b64,mediaType){
-  try{
-    const res=await fetch('https://us-central1-parking-2bd69.cloudfunctions.net/ocrPlate',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({b64,mediaType:mediaType||'image/jpeg'})
-    });
-    const data=await res.json();
-    return data.number||null;
-  }catch(e){return null;}
-}
-
 function now(){
   const d=new Date();
   return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
@@ -555,8 +420,6 @@ function register(){
   document.getElementById('visitor-name').value='';
   document.getElementById('destination').value='';
   document.getElementById('plate-number').value='';
-  document.getElementById('preview-wrap').style.display='none';
-  document.getElementById('ocr-result').style.display='none';
   const msg=document.getElementById('success-msg');
   msg.style.display='block';
   setTimeout(()=>msg.style.display='none',3000);
@@ -667,8 +530,6 @@ function autofillFromPlate(){
     document.getElementById('visitor-name').value='';
     document.getElementById('destination').value='';
     document.getElementById('plate-number').value='';
-    document.getElementById('preview-wrap').style.display='none';
-    document.getElementById('ocr-result').style.display='none';
     const msg=document.getElementById('success-msg');
     msg.textContent='✅ 過去データから自動入庫しました（'+autoName+'）';
     msg.style.display='block';
