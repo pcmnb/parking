@@ -142,33 +142,26 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 /* ===== 保存バッジ ===== */
 .save-badge{
   display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
-  padding:12px 14px 12px 16px;margin-bottom:16px;border-radius:var(--r-md);
+  padding:12px 14px 12px 16px;margin-top:16px;border-radius:var(--r-md);
   background:var(--surface);border:1px solid var(--line);font-size:16px;color:var(--muted);font-weight:600;
 }
 .save-badge .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);margin-right:8px;box-shadow:0 0 0 4px var(--primary-soft);vertical-align:middle}
 
 /* ===== 入庫ヒーロー ===== */
-.hero{padding:22px 20px 20px;margin-bottom:16px;position:relative;overflow:hidden}
-.hero::before{content:"";position:absolute;inset:-40% -20% auto auto;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--primary-soft),transparent 70%);pointer-events:none}
-.hero > *{position:relative}
-.hero-label{display:block;font-size:22px;font-weight:800;margin-bottom:14px}
+.hero{padding:20px;margin-bottom:16px}
+.hero-label{display:block;font-size:20px;font-weight:800;margin-bottom:10px}
 
-/* ナンバープレート風入力 */
-.plate-frame{
-  position:relative;border-radius:18px;padding:6px;
-  background:linear-gradient(180deg,var(--line-strong),var(--line));
-}
-.plate-frame:focus-within{background:linear-gradient(180deg,var(--primary),#6d4aff);box-shadow:var(--ring)}
+/* ナンバー入力 */
+.plate-frame{position:relative}
 #plate-number{
-  width:100%;height:96px;border:none;border-radius:13px;background:var(--surface);color:var(--text);
-  text-align:center;font-size:clamp(40px,12vw,56px);font-weight:800;letter-spacing:.2em;text-indent:.2em;padding:0 52px;
+  width:100%;height:88px;border:2px solid var(--line-strong);border-radius:var(--r-md);background:var(--surface);color:var(--text);
+  text-align:center;font-size:clamp(40px,12vw,52px);font-weight:800;letter-spacing:.2em;text-indent:.2em;padding:0 52px;
   font-family:ui-monospace,'SF Mono','Consolas',monospace;font-variant-numeric:tabular-nums;
+  transition:border-color .2s,box-shadow .2s;
 }
-#plate-number::placeholder{color:var(--line-strong);font-weight:700}
-#plate-number:focus{outline:none}
-.plate-frame .btn-search-clear{right:16px}
-.hint{position:relative;font-size:17px;color:var(--muted);margin-top:10px;font-weight:600;display:flex;align-items:center;gap:8px}
-.hint-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:var(--surface-2);font-size:15px;font-weight:700;white-space:nowrap;flex-shrink:0}
+#plate-number::placeholder{color:var(--line);font-weight:700}
+#plate-number:focus{outline:none;border-color:var(--primary);box-shadow:var(--ring)}
+.hint{font-size:16px;color:var(--muted);margin-top:8px;font-weight:600}
 
 /* ===== メインボタン ===== */
 .btn-primary{
@@ -471,18 +464,13 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
 
 <!-- 入庫フォーム -->
 <main id="entry-view" class="view">
-  <div class="save-badge">
-    <span><span class="dot"></span>データはこの端末に自動保存されます</span>
-    <button class="btn-danger-sm" onclick="confirmClearStorage()">データ全削除</button>
-  </div>
-
   <section class="card hero">
     <label class="hero-label" for="plate-number">ナンバープレート</label>
     <div class="plate-frame">
       <input type="text" id="plate-number" placeholder="0000" inputmode="numeric" maxlength="4" autocomplete="off" oninput="autofillFromPlate();toggleClearBtn(this)">
       <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none" aria-label="ナンバーを消去">✕</button>
     </div>
-    <div class="hint"><span class="hint-chip">数字4桁</span>「・」を除いた数字部分のみ入力</div>
+    <div class="hint">数字4桁（「・」を除いた数字部分のみ）</div>
     <button class="btn-primary" onclick="register()"><span aria-hidden="true">＋</span>入庫登録</button>
     <div id="success-msg" role="status">✅ 入庫登録が完了しました！</div>
   </section>
@@ -504,6 +492,11 @@ button{cursor:pointer;-webkit-tap-highlight-color:transparent}
       </div>
     </div>
   </section>
+
+  <div class="save-badge">
+    <span><span class="dot"></span>データはこの端末に自動保存されます</span>
+    <button class="btn-danger-sm" onclick="confirmClearStorage()">データ全削除</button>
+  </div>
 </main>
 
 <!-- 一覧・出庫 -->
