@@ -2,294 +2,614 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#f4f6fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0b1020" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="light dark">
 <title>車両入出庫管理</title>
 <link rel="icon" href="data:,">
 <style>
-/* ===== ユニバーサルデザイン対応（高齢者・色弱者） =====
-   ・文字サイズ大きめ（最小20px、ラベルは24px）
-   ・ボタン高さ十分（タップしやすい）
-   ・色弱対応：赤緑を識別色に使わず、青・オレンジ・グレーで区別
-   ・コントラスト強化（文字は#111、補助文字も#555以上）
-   ・入庫中バッジ→青枠＋太字、出庫済み→グレー＋斜線ラベル
+/* ===== デザイン方針 =====
+   ・ユニバーサルデザイン（高齢者・色弱者）を維持
+     - 文字サイズ大きめ（本文18px以上、主要入力は28px以上）
+     - タップ領域は最低56px
+     - 状態は「色＋アイコン＋文字」で表現（赤緑を識別色に使わない：青／オレンジ／グレー）
+   ・デザイントークン＋ライト／ダーク自動切替
+   ・下部ナビ（片手操作）、ボトムシート型モーダル、セグメント切替
+   ・prefers-reduced-motion 対応
 ========================================================= */
 
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f0f0;color:#111;font-size:20px;line-height:1.6}
+:root{
+  --bg:#f4f6fb;
+  --surface:#ffffff;
+  --surface-2:#eef1f7;
+  --surface-glass:rgba(255,255,255,.78);
+  --line:#d5dbe6;
+  --line-strong:#9aa5b8;
+  --text:#0f172a;
+  --muted:#475569;
+  --primary:#1d4ed8;
+  --primary-strong:#1e3a8a;
+  --primary-soft:#e4ecff;
+  --on-primary:#ffffff;
+  --accent:#c2410c;        /* 出庫（オレンジ） */
+  --accent-strong:#9a3412;
+  --accent-soft:#fff1e6;
+  --danger:#b42318;
+  --danger-soft:#fdecea;
+  --violet:#5b3fc4;
+  --violet-soft:#efeafe;
+  --out:#64748b;
+  --out-soft:#e8ebf0;
+  --shadow-sm:0 1px 2px rgba(15,23,42,.06),0 1px 3px rgba(15,23,42,.08);
+  --shadow-md:0 4px 12px rgba(15,23,42,.08),0 2px 4px rgba(15,23,42,.06);
+  --shadow-lg:0 24px 48px -12px rgba(15,23,42,.28);
+  --ring:0 0 0 4px rgba(29,78,216,.28);
+  --r-sm:12px;
+  --r-md:16px;
+  --r-lg:22px;
+  --r-xl:28px;
+  --nav-h:84px;
+  --ease:cubic-bezier(.2,.8,.2,1);
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0b1020;
+    --surface:#141b2d;
+    --surface-2:#1c2438;
+    --surface-glass:rgba(20,27,45,.78);
+    --line:#2a3550;
+    --line-strong:#4a5878;
+    --text:#eef2fa;
+    --muted:#a9b4c8;
+    --primary:#3d6df2;
+    --primary-strong:#8fb0ff;
+    --primary-soft:#1b2a52;
+    --accent:#d9561a;
+    --accent-strong:#ffb488;
+    --accent-soft:#3a2216;
+    --danger:#d23a2c;
+    --danger-soft:#3b1c1a;
+    --violet:#7a5ce6;
+    --violet-soft:#2a2350;
+    --out:#94a3b8;
+    --out-soft:#232c40;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+    --shadow-md:0 4px 14px rgba(0,0,0,.35);
+    --shadow-lg:0 24px 48px -12px rgba(0,0,0,.6);
+    --ring:0 0 0 4px rgba(120,160,255,.38);
+  }
+}
 
-/* ===== タブバー ===== */
-.tab-bar{display:flex;background:#0d47a1;position:sticky;top:0;z-index:100;border-bottom:4px solid #ffa000}
-.tab-btn{flex:1;padding:16px 8px 20px;color:rgba(255,255,255,0.6);border:none;background:transparent;font-size:17px;cursor:pointer;border-bottom:6px solid transparent;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;transition:background .2s,color .2s,border-color .2s}
-.tab-btn .tab-icon{font-size:30px;line-height:1}
-.tab-btn .tab-label{font-size:17px;letter-spacing:1px}
-.tab-btn.active{color:#fff;border-bottom:7px solid #ffa000;background:rgba(255,255,255,0.18);font-weight:800}
-.tab-btn.active .tab-label{font-size:19px;font-weight:800}
-.tab-btn.active .tab-icon{font-size:34px}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:system-ui,-apple-system,'Hiragino Sans','Hiragino Kaku Gothic ProN','Noto Sans JP','Meiryo',sans-serif;
+  background:var(--bg);color:var(--text);font-size:20px;line-height:1.6;
+  min-height:100dvh;
+  padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);
+  -webkit-font-smoothing:antialiased;
+  -webkit-tap-highlight-color:transparent;
+}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:none;box-shadow:var(--ring)}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* ===== ヘッダー ===== */
+.app-header{
+  position:sticky;top:0;z-index:100;
+  background:var(--surface-glass);
+  backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);
+  border-bottom:1px solid var(--line);
+  padding:calc(env(safe-area-inset-top) + 12px) 20px 12px;
+}
+.app-header-inner{max-width:720px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,var(--primary),#6d4aff);color:#fff;font-weight:900;font-size:24px;flex-shrink:0;box-shadow:var(--shadow-md)}
+.brand-title{font-size:20px;font-weight:800;letter-spacing:.02em;white-space:nowrap}
+.brand-sub{font-size:15px;color:var(--muted);font-weight:600;line-height:1.3}
+.clock{font-size:30px;font-weight:800;letter-spacing:.02em;line-height:1}
+
+/* ===== 下部ナビ ===== */
+.tab-bar{
+  position:fixed;left:0;right:0;bottom:0;z-index:150;
+  display:flex;gap:8px;
+  padding:10px max(12px,calc((100vw - 720px)/2)) calc(10px + env(safe-area-inset-bottom));
+  background:var(--surface-glass);
+  backdrop-filter:saturate(1.6) blur(18px);-webkit-backdrop-filter:saturate(1.6) blur(18px);
+  border-top:1px solid var(--line);
+}
+.tab-btn{
+  flex:1;min-height:64px;border:none;background:transparent;border-radius:var(--r-md);
+  color:var(--muted);font-weight:700;
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;
+  transition:background .25s var(--ease),color .25s var(--ease),transform .15s var(--ease);
+}
+.tab-btn:active{transform:scale(.97)}
+.tab-btn .tab-icon{font-size:28px;line-height:1}
+.tab-btn .tab-label{font-size:19px;letter-spacing:.06em}
+.tab-btn.active{background:var(--primary);color:var(--on-primary);box-shadow:0 6px 16px -4px rgba(29,78,216,.55)}
+.tab-btn.active .tab-label{font-weight:800}
 
 /* ===== メインビュー ===== */
-.view{padding:20px;max-width:600px;margin:0 auto}
+.view{padding:20px 16px;max-width:720px;margin:0 auto;animation:viewIn .35s var(--ease)}
+@keyframes viewIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
-/* ===== フォームフィールド ===== */
-.field{margin-bottom:24px}
-.field label{display:block;font-size:22px;font-weight:800;margin-bottom:10px;color:#111}
-.field input{width:100%;padding:18px 20px;font-size:22px;border:3px solid #999;border-radius:12px;background:#fff;color:#111}
-.field input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.25)}
-.field .hint{font-size:18px;color:#555;margin-top:6px;font-weight:500}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--shadow-sm)}
+.section-title{font-size:16px;font-weight:800;color:var(--muted);letter-spacing:.08em;margin:0 4px 10px}
+
+/* ===== 保存バッジ ===== */
+.save-badge{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  padding:12px 14px 12px 16px;margin-bottom:16px;border-radius:var(--r-md);
+  background:var(--surface);border:1px solid var(--line);font-size:16px;color:var(--muted);font-weight:600;
+}
+.save-badge .dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--primary);margin-right:8px;box-shadow:0 0 0 4px var(--primary-soft);vertical-align:middle}
+
+/* ===== 入庫ヒーロー ===== */
+.hero{padding:22px 20px 20px;margin-bottom:16px;position:relative;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-40% -20% auto auto;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,var(--primary-soft),transparent 70%);pointer-events:none}
+.hero > *{position:relative}
+.hero-label{display:block;font-size:22px;font-weight:800;margin-bottom:14px}
+
+/* ナンバープレート風入力 */
+.plate-frame{
+  position:relative;border-radius:18px;padding:6px;
+  background:linear-gradient(180deg,var(--line-strong),var(--line));
+}
+.plate-frame:focus-within{background:linear-gradient(180deg,var(--primary),#6d4aff);box-shadow:var(--ring)}
+#plate-number{
+  width:100%;height:96px;border:none;border-radius:13px;background:var(--surface);color:var(--text);
+  text-align:center;font-size:clamp(40px,12vw,56px);font-weight:800;letter-spacing:.2em;text-indent:.2em;padding:0 52px;
+  font-family:ui-monospace,'SF Mono','Consolas',monospace;font-variant-numeric:tabular-nums;
+}
+#plate-number::placeholder{color:var(--line-strong);font-weight:700}
+#plate-number:focus{outline:none}
+.plate-frame .btn-search-clear{right:16px}
+.hint{position:relative;font-size:17px;color:var(--muted);margin-top:10px;font-weight:600;display:flex;align-items:center;gap:8px}
+.hint-chip{display:inline-flex;align-items:center;padding:2px 10px;border-radius:999px;background:var(--surface-2);font-size:15px;font-weight:700;white-space:nowrap;flex-shrink:0}
 
 /* ===== メインボタン ===== */
-.btn-primary{width:100%;padding:26px;font-size:26px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:14px;cursor:pointer;margin-top:10px;letter-spacing:2px;box-shadow:0 4px 0 #083070}
-.btn-primary:active{background:#083070;transform:translateY(3px);box-shadow:none}
+.btn-primary{
+  width:100%;min-height:76px;margin-top:18px;border:none;border-radius:var(--r-md);
+  background:linear-gradient(180deg,#3366ee,var(--primary));color:var(--on-primary);
+  font-size:26px;font-weight:800;letter-spacing:.3em;
+  box-shadow:0 10px 24px -8px rgba(29,78,216,.6),inset 0 1px 0 rgba(255,255,255,.25);
+  transition:transform .15s var(--ease),box-shadow .2s var(--ease),filter .2s;
+  display:flex;align-items:center;justify-content:center;gap:12px;
+}
+.btn-primary:hover{filter:brightness(1.05)}
+.btn-primary:active{transform:scale(.985);box-shadow:0 4px 10px -4px rgba(29,78,216,.6)}
+
+/* ===== フォームフィールド ===== */
+.form-card{padding:20px}
+.field{margin-bottom:20px}
+.field:last-child{margin-bottom:0}
+.field label{display:block;font-size:19px;font-weight:800;margin-bottom:8px}
+.field .opt{font-size:14px;font-weight:700;color:var(--muted);background:var(--surface-2);padding:2px 10px;border-radius:999px;margin-left:8px;vertical-align:middle}
+.input-wrap,.field-row{position:relative;display:block}
+.text-input,.field input,.modal-field input,.search-input{
+  width:100%;min-height:64px;padding:14px 60px 14px 18px;font-size:21px;
+  border:2px solid var(--line);border-radius:var(--r-sm);background:var(--surface);color:var(--text);
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.text-input::placeholder,.field input::placeholder,.search-input::placeholder{color:var(--muted);opacity:.75}
+.field input:focus,.modal-field input:focus,.search-input:focus{outline:none;border-color:var(--primary);box-shadow:var(--ring)}
+
+/* 入力欄内のクリアボタン */
+.btn-search-clear{
+  position:absolute;top:50%;right:10px;transform:translateY(-50%);
+  width:44px;height:44px;border-radius:50%;border:none;
+  background:var(--surface-2);color:var(--muted);font-size:20px;font-weight:800;line-height:44px;text-align:center;
+  transition:background .2s,color .2s;
+}
+.btn-search-clear:hover{background:var(--line);color:var(--text)}
 
 /* ===== 成功メッセージ ===== */
-#success-msg{display:none;background:#e3f2fd;border:3px solid #0d47a1;border-radius:12px;padding:20px;margin-top:18px;text-align:center;font-size:22px;color:#0d47a1;font-weight:800}
+#success-msg{
+  display:none;margin-top:16px;padding:18px 20px;border-radius:var(--r-md);
+  background:var(--primary-soft);color:var(--primary-strong);border:2px solid var(--primary);
+  font-size:20px;font-weight:800;text-align:center;animation:pop .45s var(--ease);
+}
+@keyframes pop{0%{opacity:0;transform:scale(.94) translateY(6px)}100%{opacity:1;transform:none}}
 
 /* ===== 一覧ヘッダー ===== */
-.list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
-.list-header h2{font-size:21px;font-weight:800}
-
-/* CSV・インポートボタン */
-.btn-csv{padding:14px 20px;font-size:18px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:10px;cursor:pointer}
+.list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px}
+.list-header h2{font-size:22px;font-weight:800;line-height:1.35}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.btn-tool{
+  min-height:52px;padding:10px 16px;border-radius:var(--r-sm);font-size:17px;font-weight:800;
+  background:var(--surface);color:var(--text);border:1px solid var(--line);box-shadow:var(--shadow-sm);
+  display:inline-flex;align-items:center;gap:8px;transition:transform .15s var(--ease),background .2s;
+}
+.btn-tool:hover{background:var(--surface-2)}
+.btn-tool:active{transform:scale(.97)}
 
 /* ===== 統計カード ===== */
-.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}
-.stat-card{background:#fff;border-radius:12px;padding:14px 8px;text-align:center;border:2px solid #ddd}
-.stat-num{font-size:32px;font-weight:800;color:#0d47a1}
-.stat-label{font-size:16px;color:#444;margin-top:4px;font-weight:600}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:14px 12px 12px;box-shadow:var(--shadow-sm);position:relative;overflow:hidden}
+.stat-card::after{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--line-strong)}
+.stat-card.is-in::after{background:var(--primary)}
+.stat-card.is-out::after{background:repeating-linear-gradient(45deg,var(--out) 0 4px,transparent 4px 8px)}
+.stat-label{font-size:15px;color:var(--muted);font-weight:700;display:flex;align-items:center;gap:6px}
+.stat-num{font-size:38px;font-weight:800;line-height:1.15;margin-top:2px;font-variant-numeric:tabular-nums}
+.stat-card.is-in .stat-num{color:var(--primary)}
+.stat-card.is-out .stat-num{color:var(--out)}
+.stat-num small{font-size:16px;font-weight:700;color:var(--muted);margin-left:2px}
+
+/* ===== 検索パネル ===== */
+.search-panel{padding:14px;margin-bottom:12px;display:grid;gap:10px}
+.search-box{position:relative}
+.search-box .ico{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-size:20px;pointer-events:none;opacity:.8}
+.search-input{padding-left:50px;background:var(--surface-2);border-color:transparent}
+.search-input:focus{background:var(--surface)}
+.search-input.mono{font-family:ui-monospace,'SF Mono','Consolas',monospace;letter-spacing:.2em;font-size:22px}
+.search-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:520px){.search-row{grid-template-columns:1fr}}
+
+/* ===== ステータスフィルター（セグメント） ===== */
+.filter-btn-row{display:flex;gap:4px;padding:4px;margin-bottom:14px;background:var(--surface-2);border-radius:var(--r-md);border:1px solid var(--line)}
+.btn-filter{
+  flex:1;min-height:52px;border:none;border-radius:12px;background:transparent;color:var(--muted);
+  font-size:18px;font-weight:700;transition:background .25s var(--ease),color .25s var(--ease),box-shadow .25s;
+}
+.btn-filter.f-active{background:var(--surface);color:var(--primary);font-weight:800;box-shadow:var(--shadow-md)}
+
+.search-result-label{
+  display:none;margin-bottom:12px;padding:12px 16px;border-radius:var(--r-sm);
+  background:var(--primary-soft);color:var(--primary-strong);font-size:18px;font-weight:800;
+  border-left:6px solid var(--primary);
+}
 
 /* ===== 記録カード ===== */
 .record-list{display:flex;flex-direction:column;gap:12px}
-.record-card{background:#fff;border-radius:14px;border:2px solid #ccc;padding:18px 20px;cursor:pointer;transition:box-shadow .15s}
-.record-card:active{box-shadow:0 0 0 3px #0d47a1}
-.record-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.record-name{font-size:22px;font-weight:800;color:#111}
-.plate-num{font-size:22px;font-weight:800;color:#0d47a1;font-family:monospace;letter-spacing:3px}
-.record-card-mid{font-size:19px;color:#444;margin-bottom:10px;font-weight:500}
-.record-card-bot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.time-info{font-size:18px;color:#444;font-weight:500}
+.record-card{
+  position:relative;overflow:hidden;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);
+  padding:16px 16px 16px 24px;box-shadow:var(--shadow-sm);
+  transition:transform .15s var(--ease),box-shadow .2s var(--ease),border-color .2s;
+  animation:viewIn .3s var(--ease) both;
+}
+.record-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--primary)}
+.record-card.is-out::before{background:repeating-linear-gradient(45deg,var(--out) 0 5px,transparent 5px 10px)}
+.record-card:hover{box-shadow:var(--shadow-md)}
+.record-card:active{transform:scale(.99)}
+.record-card.search-match{border-color:var(--primary)}
+.record-card.is-out .record-name{color:var(--muted)}
 
-/* 色弱対応バッジ：青枠＋パターンで入庫中を表現 */
-.badge-in{background:#e3f2fd;color:#0d47a1;padding:6px 16px;border-radius:20px;font-size:17px;font-weight:800;border:2px solid #0d47a1}
-/* 出庫済みはグレー背景＋取り消し線で明示 */
-.badge-out{background:#e8e8e8;color:#555;padding:6px 16px;border-radius:20px;font-size:17px;font-weight:700;border:2px solid #999}
+.record-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:6px}
+.record-name{font-size:22px;font-weight:800;line-height:1.35;word-break:break-word}
+.plate-num{
+  flex-shrink:0;font-family:ui-monospace,'SF Mono','Consolas',monospace;font-size:24px;font-weight:800;letter-spacing:.14em;
+  padding:4px 10px 4px 14px;border-radius:10px;background:var(--surface);border:2px solid var(--text);color:var(--text);line-height:1.2;
+  font-variant-numeric:tabular-nums;
+}
+.record-card-mid{font-size:18px;color:var(--muted);margin-bottom:12px;font-weight:600;display:flex;flex-wrap:wrap;gap:6px 14px}
+.record-card-bot{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding-top:12px;border-top:1px dashed var(--line)}
+.time-info{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.time-block{display:flex;flex-direction:column;line-height:1.2}
+.time-block .t-label{font-size:14px;color:var(--muted);font-weight:700}
+.time-block .t-val{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.time-arrow{color:var(--line-strong);font-size:20px;font-weight:800}
+.stay{font-size:15px;font-weight:700;color:var(--muted);background:var(--surface-2);padding:4px 10px;border-radius:999px;white-space:nowrap}
+
+.badge-in,.badge-out{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:999px;font-size:16px;font-weight:800;white-space:nowrap}
+.badge-in{background:var(--primary-soft);color:var(--primary-strong);border:2px solid var(--primary)}
+.badge-out{background:var(--out-soft);color:var(--muted);border:2px dashed var(--out)}
 
 /* 出庫ボタン：オレンジ（青と明確に区別） */
-.btn-checkout{padding:14px 22px;font-size:19px;font-weight:800;background:#e65100;color:#fff;border:none;border-radius:10px;cursor:pointer;box-shadow:0 3px 0 #9a3800;min-width:100px}
-.btn-checkout:active{transform:translateY(2px);box-shadow:none}
+.btn-checkout{
+  min-height:60px;min-width:132px;padding:12px 22px;border:none;border-radius:var(--r-md);
+  background:linear-gradient(180deg,#e0581c,var(--accent));color:#fff;font-size:21px;font-weight:800;letter-spacing:.2em;
+  box-shadow:0 8px 18px -8px rgba(194,65,12,.7),inset 0 1px 0 rgba(255,255,255,.25);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  transition:transform .15s var(--ease),filter .2s;
+}
+.btn-checkout:hover{filter:brightness(1.05)}
+.btn-checkout:active{transform:scale(.96)}
 
-.empty-state{text-align:center;padding:52px 20px;color:#666;font-size:20px}
+.empty-state{text-align:center;padding:48px 20px;color:var(--muted);font-size:19px;font-weight:600;border:2px dashed var(--line);border-radius:var(--r-lg)}
+.empty-state .big{display:block;font-size:48px;margin-bottom:8px;opacity:.7}
 
-/* 保存バッジ */
-.save-badge{background:#e3f2fd;border:2px solid #0d47a1;border-radius:10px;padding:12px 16px;font-size:18px;color:#0d47a1;margin-bottom:20px;display:flex;align-items:center;gap:8px;font-weight:600}
+/* ===== 共通オーバーレイ ===== */
+.modal-overlay,.csv-modal-overlay,.confirm-modal-overlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(8,12,24,.5);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  justify-content:center;animation:fade .25s var(--ease);
+}
+.modal-overlay{z-index:200;align-items:flex-end}
+.csv-modal-overlay{z-index:300;align-items:flex-end}
+.confirm-modal-overlay{z-index:400;align-items:center;padding:16px}
+.modal-overlay.open,.csv-modal-overlay.open,.confirm-modal-overlay.open{display:flex}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:none}}
+@keyframes zoomIn{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:none}}
 
-/* ===== モーダル ===== */
-.modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:200;align-items:flex-end;justify-content:center}
-.modal-overlay.open{display:flex}
-.modal{background:#fff;border-radius:20px 20px 0 0;padding:24px;width:100%;max-width:600px;max-height:90vh;overflow-y:auto}
-.modal-title{font-size:22px;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;color:#111}
-.modal-close{background:#e0e0e0;border:none;font-size:26px;cursor:pointer;color:#333;padding:4px 12px;border-radius:8px;font-weight:700}
-.modal-field{margin-bottom:18px}
-.modal-field label{display:block;font-size:20px;color:#333;margin-bottom:6px;font-weight:700}
-.modal-field input{width:100%;padding:16px 18px;font-size:22px;border:3px solid #aaa;border-radius:12px;background:#fff;color:#111}
-.modal-field input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.2)}
-.modal-actions{display:flex;gap:12px;margin-top:20px}
-.btn-save{flex:2;padding:20px;font-size:22px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:12px;cursor:pointer}
-/* 削除ボタン：オレンジ系（赤と緑の混同を避ける） */
-.btn-delete{flex:1;padding:20px;font-size:22px;font-weight:800;background:#bf360c;color:#fff;border:none;border-radius:12px;cursor:pointer}
+/* ボトムシート */
+.modal,.csv-modal{
+  background:var(--surface);width:100%;max-width:640px;max-height:92dvh;overflow-y:auto;
+  border-radius:var(--r-xl) var(--r-xl) 0 0;
+  padding:12px 20px calc(24px + env(safe-area-inset-bottom));
+  box-shadow:var(--shadow-lg);animation:sheetUp .38s var(--ease);
+  overscroll-behavior:contain;
+}
+.modal::before,.csv-modal::before{content:"";display:block;width:48px;height:6px;border-radius:3px;background:var(--line-strong);margin:0 auto 16px;opacity:.6}
+@media (min-width:700px){
+  .modal-overlay,.csv-modal-overlay{align-items:center;padding:24px}
+  .modal,.csv-modal{border-radius:var(--r-xl);animation:zoomIn .3s var(--ease);padding-bottom:24px}
+  .modal::before,.csv-modal::before{display:none}
+  .csv-modal{max-width:460px}
+}
+.modal-title{font-size:22px;font-weight:800;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center}
+.modal-close{width:48px;height:48px;border-radius:50%;border:none;background:var(--surface-2);color:var(--text);font-size:22px;font-weight:800}
+.modal-close:hover{background:var(--line)}
+.modal-field{margin-bottom:16px}
+.modal-field label{display:block;font-size:17px;color:var(--muted);margin-bottom:6px;font-weight:800}
+.modal-field input{padding-right:18px}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.modal-actions{display:flex;gap:12px;margin-top:22px}
+.btn-save,.btn-delete,.btn-revert,.btn-csv-do,.btn-csv-cancel,.btn-import-do,.btn-confirm-ok,.btn-confirm-cancel{
+  min-height:64px;border:none;border-radius:var(--r-md);font-size:20px;font-weight:800;
+  transition:transform .15s var(--ease),filter .2s,background .2s;
+}
+.btn-save:active,.btn-delete:active,.btn-revert:active,.btn-csv-do:active,.btn-csv-cancel:active,.btn-import-do:active,.btn-confirm-ok:active,.btn-confirm-cancel:active{transform:scale(.98)}
+.btn-save{flex:2;background:var(--primary);color:var(--on-primary);letter-spacing:.2em}
+.btn-delete{flex:1;background:var(--danger-soft);color:var(--danger);border:2px solid var(--danger);letter-spacing:.2em}
+.btn-revert{display:none;width:100%;margin-top:12px;background:var(--accent-soft);color:var(--accent-strong);border:2px solid var(--accent)}
 
-/* ===== トースト ===== */
-#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:16px 30px;border-radius:32px;font-size:19px;display:none;z-index:999;white-space:nowrap;font-weight:700}
+/* ===== CSVモーダル ===== */
+.csv-modal-title{font-size:22px;font-weight:800;margin-bottom:18px;text-align:center}
+.csv-btn-group{display:flex;flex-direction:column;gap:10px}
+.btn-csv-opt{
+  width:100%;min-height:72px;padding:14px 18px;border-radius:var(--r-md);
+  background:var(--surface);border:2px solid var(--line);color:var(--text);
+  font-size:20px;font-weight:800;text-align:left;display:flex;align-items:center;gap:14px;
+  transition:border-color .2s,background .2s,transform .15s var(--ease);
+}
+.btn-csv-opt:hover{border-color:var(--primary);background:var(--primary-soft)}
+.btn-csv-opt:active{transform:scale(.99)}
+.btn-csv-opt .opt-ico{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:24px;flex-shrink:0}
+.btn-csv-today .opt-ico{background:var(--primary-soft)}
+.btn-csv-date .opt-ico{background:var(--accent-soft)}
+.btn-csv-all .opt-ico{background:var(--violet-soft)}
+.btn-csv-opt .opt-sub{display:block;font-size:15px;font-weight:600;color:var(--muted)}
+.csv-date-row{display:none;flex-direction:column;gap:10px;padding:14px;border-radius:var(--r-md);background:var(--surface-2)}
+.csv-date-row.show{display:flex;animation:pop .3s var(--ease)}
+.csv-date-input{width:100%;min-height:60px;padding:12px 16px;font-size:20px;border:2px solid var(--primary);border-radius:var(--r-sm);background:var(--surface);color:var(--text)}
+.btn-csv-do{width:100%;background:var(--primary);color:var(--on-primary)}
+.btn-csv-cancel{width:100%;margin-top:14px;background:var(--surface-2);color:var(--text)}
 
-/* ===== CSV出力モーダル ===== */
-.csv-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.55);z-index:300;align-items:center;justify-content:center;padding:16px}
-.csv-modal-overlay.open{display:flex}
-.csv-modal{background:#fff;border-radius:18px;padding:26px;width:100%;max-width:420px}
-.csv-modal-title{font-size:22px;font-weight:800;margin-bottom:22px;text-align:center;color:#111}
-.csv-btn-group{display:flex;flex-direction:column;gap:14px}
-.btn-csv-opt{width:100%;padding:22px 18px;font-size:20px;font-weight:800;border:3px solid transparent;border-radius:14px;cursor:pointer;text-align:left;display:flex;align-items:center;gap:14px}
-/* CSV選択肢：色でなく背景パターン＋太字ラベルで区別 */
-.btn-csv-today{background:#e3f2fd;color:#0d47a1;border-color:#0d47a1}
-.btn-csv-date{background:#fff8e1;color:#5d4037;border-color:#ffa000}
-.btn-csv-all{background:#f3e5f5;color:#4a148c;border-color:#7b1fa2}
-.csv-date-row{display:none;flex-direction:column;gap:10px}
-.csv-date-row.show{display:flex}
-.csv-date-input{width:100%;padding:14px 16px;font-size:20px;border:3px solid #0d47a1;border-radius:12px;background:#fff;color:#111}
-.btn-csv-do{width:100%;padding:18px;font-size:20px;font-weight:800;background:#0d47a1;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:4px}
-.btn-csv-cancel{width:100%;padding:16px;font-size:19px;font-weight:700;background:#e0e0e0;color:#333;border:none;border-radius:12px;cursor:pointer;margin-top:8px}
-
-/* ===== ナンバー検索 ===== */
-.search-box{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;align-items:center}
-.search-input{flex:1 1 140px;min-width:0;padding:16px 18px;font-size:22px;border:3px solid #aaa;border-radius:12px;background:#fff;color:#111;font-family:monospace;letter-spacing:3px}
-.search-input:focus{outline:none;border-color:#0d47a1;box-shadow:0 0 0 3px rgba(13,71,161,0.2)}
-.btn-search-clear{padding:14px 18px;font-size:18px;font-weight:800;background:#ccc;color:#111;border:none;border-radius:10px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-
-
-/* ===== 入力欄＋操作ボタン共通レイアウト ===== */
-.field-row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-.field-row input{flex:1 1 140px;min-width:0;width:auto}
-.search-result-label{font-size:19px;color:#0d47a1;font-weight:800;background:#e3f2fd;border-radius:10px;padding:10px 16px;margin-bottom:12px;display:none;border-left:5px solid #0d47a1}
-.record-card.search-match{border:3px solid #0d47a1;background:#f0f7ff}
-
-/* ===== ステータスフィルターボタン ===== */
-.filter-btn-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
-.btn-filter{padding:12px 18px;font-size:18px;font-weight:700;background:#e0e0e0;color:#444;border:2px solid #bbb;border-radius:10px;cursor:pointer}
-.btn-filter.f-active{background:#0d47a1;color:#fff;border-color:#0d47a1;font-weight:800}
-
-/* ===== CSV読み込み・ストレージ削除 ===== */
-.btn-import{padding:14px 20px;font-size:18px;font-weight:800;background:#5e35b1;color:#fff;border:none;border-radius:10px;cursor:pointer}
+/* ===== CSV読み込み ===== */
 #csv-import-input{display:none}
-.btn-danger-sm{padding:10px 16px;font-size:17px;font-weight:800;background:#bf360c;color:#fff;border:none;border-radius:8px;cursor:pointer}
-.import-mode-row{display:flex;flex-direction:column;gap:10px;margin-top:10px;padding:16px;background:#f3e5f5;border-radius:12px;border:2px solid #7b1fa2}
-.import-mode-row label{font-size:19px;color:#333;font-weight:700}
-.import-mode-select{width:100%;padding:14px 16px;font-size:19px;border:3px solid #7b1fa2;border-radius:10px;background:#fff;color:#111}
-.btn-import-do{width:100%;padding:18px;font-size:20px;font-weight:800;background:#5e35b1;color:#fff;border:none;border-radius:12px;cursor:pointer;margin-top:6px}
+.import-mode-row{display:flex;flex-direction:column;gap:10px}
+.import-mode-row > label,.import-label{font-size:17px;color:var(--muted);font-weight:800}
+.seg-options{display:grid;gap:10px}
+.seg-option{position:relative}
+.seg-option input{position:absolute;opacity:0;pointer-events:none}
+.seg-option span{
+  display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 16px;border-radius:var(--r-md);
+  border:2px solid var(--line);background:var(--surface);font-size:19px;font-weight:800;transition:border-color .2s,background .2s;
+}
+.seg-option span::before{content:"";width:24px;height:24px;border-radius:50%;border:3px solid var(--line-strong);flex-shrink:0;transition:border .2s}
+.seg-option input:checked + span{border-color:var(--violet);background:var(--violet-soft)}
+.seg-option input:checked + span::before{border:8px solid var(--violet)}
+.seg-option input:focus-visible + span{box-shadow:var(--ring)}
+.drop-zone{
+  width:100%;min-height:96px;margin-top:6px;border-radius:var(--r-md);border:2px dashed var(--line-strong);
+  background:var(--surface-2);color:var(--text);font-size:19px;font-weight:800;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;transition:border-color .2s,background .2s;
+}
+.drop-zone:hover{border-color:var(--violet);background:var(--violet-soft)}
+.drop-zone small{font-size:15px;color:var(--muted);font-weight:600}
+#import-file-name{margin-top:10px;font-size:17px;text-align:center;font-weight:700;word-break:break-all}
+.btn-import-do{width:100%;background:var(--violet);color:#fff}
+#btn-do-import{display:none;margin-top:4px}
 
 /* ===== 確認モーダル ===== */
-.confirm-modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);z-index:400;align-items:center;justify-content:center;padding:16px}
-.confirm-modal-overlay.open{display:flex}
-.confirm-modal{background:#fff;border-radius:18px;padding:28px;width:100%;max-width:380px;text-align:center;border-top:6px solid #bf360c}
-.confirm-modal-icon{font-size:56px;margin-bottom:14px}
-.confirm-modal-msg{font-size:20px;color:#111;line-height:1.7;margin-bottom:24px;font-weight:600}
+.confirm-modal{
+  background:var(--surface);border-radius:var(--r-xl);padding:28px 22px 22px;width:100%;max-width:400px;text-align:center;
+  box-shadow:var(--shadow-lg);animation:zoomIn .3s var(--ease);
+}
+.confirm-modal-icon{width:76px;height:76px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;font-size:40px;background:var(--danger-soft)}
+.confirm-modal-msg{font-size:19px;line-height:1.7;margin-bottom:22px;font-weight:600}
 .confirm-modal-actions{display:flex;gap:12px}
-.btn-confirm-ok{flex:1;padding:20px;font-size:20px;font-weight:800;background:#bf360c;color:#fff;border:none;border-radius:12px;cursor:pointer}
-.btn-confirm-cancel{flex:1;padding:20px;font-size:20px;font-weight:800;background:#e0e0e0;color:#333;border:none;border-radius:12px;cursor:pointer}
+.btn-confirm-ok{flex:1;background:var(--danger);color:#fff}
+.btn-confirm-cancel{flex:1;background:var(--surface-2);color:var(--text)}
+
+.btn-danger-sm{
+  min-height:44px;padding:8px 14px;border-radius:10px;border:1px solid var(--danger);
+  background:transparent;color:var(--danger);font-size:15px;font-weight:800;transition:background .2s;
+}
+.btn-danger-sm:hover{background:var(--danger-soft)}
+
+/* ===== トースト ===== */
+#toast{
+  position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 16px);z-index:999;
+  transform:translate(-50%,20px);opacity:0;pointer-events:none;
+  width:max-content;max-width:calc(100vw - 32px);padding:14px 24px;border-radius:999px;
+  background:var(--text);color:var(--bg);font-size:18px;font-weight:800;text-align:center;
+  box-shadow:var(--shadow-lg);transition:opacity .3s var(--ease),transform .3s var(--ease);
+}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
+@media (max-width:380px){
+  .brand-sub{display:none}
+  .stat-num{font-size:32px}
+}
 </style>
 </head>
 <body>
 
-<div class="tab-bar">
-  <button class="tab-btn active" onclick="showView('entry')">
-    <span class="tab-icon">🚗</span>
-    <span class="tab-label">入　庫</span>
+<header class="app-header">
+  <div class="app-header-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">P</div>
+      <div>
+        <div class="brand-title">車両入出庫管理</div>
+        <div class="brand-sub" id="header-date"></div>
+      </div>
+    </div>
+    <div class="clock num" id="header-clock" aria-label="現在時刻"></div>
+  </div>
+</header>
+
+<nav class="tab-bar" role="tablist" aria-label="画面切替">
+  <button class="tab-btn active" role="tab" aria-selected="true" onclick="showView('entry')">
+    <span class="tab-icon" aria-hidden="true">🚗</span>
+    <span class="tab-label">入庫</span>
   </button>
-  <button class="tab-btn" onclick="showView('list')">
-    <span class="tab-icon">📋</span>
+  <button class="tab-btn" role="tab" aria-selected="false" onclick="showView('list')">
+    <span class="tab-icon" aria-hidden="true">📋</span>
     <span class="tab-label">一覧・出庫</span>
   </button>
-</div>
-<div id="toast"></div>
+</nav>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <!-- 入庫フォーム -->
-<div id="entry-view" class="view">
-  <div class="save-badge" style="justify-content:space-between;flex-wrap:wrap">
-    <span>💾 データはこの端末に自動保存されます</span>
-    <button class="btn-danger-sm" onclick="confirmClearStorage()" style="font-size:16px;padding:10px 16px">🗑️ データ全削除</button>
+<main id="entry-view" class="view">
+  <div class="save-badge">
+    <span><span class="dot"></span>データはこの端末に自動保存されます</span>
+    <button class="btn-danger-sm" onclick="confirmClearStorage()">データ全削除</button>
   </div>
-  <div class="field">
-    <label>ナンバープレート</label>
-    <div class="field-row" style="margin-top:10px">
-      <input type="text" id="plate-number" placeholder="数字4桁（例：1234）" inputmode="numeric" maxlength="4" oninput="autofillFromPlate();toggleClearBtn(this)" style="min-width:120px;padding:18px 20px;font-size:28px;border:3px solid #999;border-radius:12px;font-family:monospace;letter-spacing:4px;color:#111">
-      <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none">✕</button>
+
+  <section class="card hero">
+    <label class="hero-label" for="plate-number">ナンバープレート</label>
+    <div class="plate-frame">
+      <input type="text" id="plate-number" placeholder="0000" inputmode="numeric" maxlength="4" autocomplete="off" oninput="autofillFromPlate();toggleClearBtn(this)">
+      <button type="button" class="btn-search-clear" id="clear-plate-number" onclick="clearInputField('plate-number')" style="display:none" aria-label="ナンバーを消去">✕</button>
     </div>
-    <div class="hint">・を除いた数字部分のみ入力</div>
-  </div>
-  <button class="btn-primary" onclick="register()">入　庫　登　録</button>
-  <div class="field" style="margin-top:24px">
-    <label>訪問者名（会社名）</label>
-    <div class="field-row">
-      <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社" oninput="toggleClearBtn(this)">
-      <button type="button" class="btn-search-clear" id="clear-visitor-name" onclick="clearInputField('visitor-name')" style="display:none">✕</button>
+    <div class="hint"><span class="hint-chip">数字4桁</span>「・」を除いた数字部分のみ入力</div>
+    <button class="btn-primary" onclick="register()"><span aria-hidden="true">＋</span>入庫登録</button>
+    <div id="success-msg" role="status">✅ 入庫登録が完了しました！</div>
+  </section>
+
+  <div class="section-title">訪問情報（任意）</div>
+  <section class="card form-card">
+    <div class="field">
+      <label for="visitor-name">訪問者名（会社名）</label>
+      <div class="field-row">
+        <input type="text" id="visitor-name" placeholder="例：山田太郎 / 〇〇株式会社" autocomplete="off" oninput="toggleClearBtn(this)">
+        <button type="button" class="btn-search-clear" id="clear-visitor-name" onclick="clearInputField('visitor-name')" style="display:none" aria-label="訪問者名を消去">✕</button>
+      </div>
     </div>
-  </div>
-  <div class="field">
-    <label>訪問先（担当部署・担当者）</label>
-    <div class="field-row">
-      <input type="text" id="destination" placeholder="例：営業部 鈴木" oninput="toggleClearBtn(this)">
-      <button type="button" class="btn-search-clear" id="clear-destination" onclick="clearInputField('destination')" style="display:none">✕</button>
+    <div class="field">
+      <label for="destination">訪問先（担当部署・担当者）</label>
+      <div class="field-row">
+        <input type="text" id="destination" placeholder="例：営業部 鈴木" autocomplete="off" oninput="toggleClearBtn(this)">
+        <button type="button" class="btn-search-clear" id="clear-destination" onclick="clearInputField('destination')" style="display:none" aria-label="訪問先を消去">✕</button>
+      </div>
     </div>
-  </div>
-  <div id="success-msg">✅ 入庫登録が完了しました！</div>
-</div>
+  </section>
+</main>
 
 <!-- 一覧・出庫 -->
-<div id="list-view" class="view" style="display:none">
+<main id="list-view" class="view" style="display:none">
   <div class="list-header">
     <h2 id="today-label"></h2>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn-import" onclick="openImportModal()">📂 CSV読込</button>
-      <button class="btn-csv" onclick="openCsvModal()">📥 CSV出力</button>
+    <div class="toolbar">
+      <button class="btn-tool" onclick="openImportModal()"><span aria-hidden="true">📂</span>CSV読込</button>
+      <button class="btn-tool" onclick="openCsvModal()"><span aria-hidden="true">📥</span>CSV出力</button>
     </div>
   </div>
-  <!-- ナンバー検索 -->
-  <div class="search-box">
-    <input type="text" id="search-plate" class="search-input" placeholder="🔍 ナンバーで検索" inputmode="numeric" maxlength="4"
-      oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
-    <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none">✕</button>
-  </div>
-  <!-- 訪問者名検索 -->
-  <div class="search-box">
-    <input type="text" id="search-name" class="search-input" placeholder="🔍 訪問者名で検索" style="letter-spacing:normal;font-size:19px"
-      oninput="onNameSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
-    <button class="btn-search-clear" id="btn-name-clear" onclick="clearNameSearch()" style="display:none">✕</button>
-  </div>
-  <!-- 日付検索 -->
-  <div class="search-box" style="margin-bottom:10px">
-    <input type="text" id="search-date" class="search-input" placeholder="例：20260601 または 2026/06/01" maxlength="10" inputmode="numeric" style="letter-spacing:normal;font-size:19px"
-      oninput="onDateSearchInput()">
-    <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none">✕</button>
-  </div>
-  <!-- ステータスフィルター -->
-  <div class="filter-btn-row">
-    <button id="btn-filter-all" class="btn-filter f-active" onclick="setStatusFilter('all')">すべて</button>
-    <button id="btn-filter-in" class="btn-filter" onclick="setStatusFilter('in')">入庫中</button>
-    <button id="btn-filter-out" class="btn-filter" onclick="setStatusFilter('out')">出庫済み</button>
-  </div>
-  <div class="search-result-label" id="search-result-label"></div>
+
   <div class="stats">
-    <div class="stat-card"><div class="stat-num" id="stat-total">0</div><div class="stat-label">本日合計</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-in" style="color:#0d47a1">0</div><div class="stat-label">入庫中</div></div>
-    <div class="stat-card"><div class="stat-num" id="stat-out" style="color:#555">0</div><div class="stat-label">出庫済み</div></div>
+    <div class="stat-card"><div class="stat-label">合計</div><div class="stat-num"><span id="stat-total">0</span><small>台</small></div></div>
+    <div class="stat-card is-in"><div class="stat-label">● 入庫中</div><div class="stat-num"><span id="stat-in">0</span><small>台</small></div></div>
+    <div class="stat-card is-out"><div class="stat-label">○ 出庫済み</div><div class="stat-num"><span id="stat-out">0</span><small>台</small></div></div>
   </div>
+
+  <section class="card search-panel" aria-label="検索">
+    <div class="search-row">
+      <!-- ナンバー検索 -->
+      <div class="search-box">
+        <span class="ico" aria-hidden="true">🔢</span>
+        <input type="text" id="search-plate" class="search-input mono" placeholder="ナンバー" inputmode="numeric" maxlength="4" aria-label="ナンバーで検索"
+          oninput="onSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
+        <button class="btn-search-clear" id="btn-search-clear" onclick="clearSearch()" style="display:none" aria-label="ナンバー検索を消去">✕</button>
+      </div>
+      <!-- 日付検索 -->
+      <div class="search-box">
+        <span class="ico" aria-hidden="true">📅</span>
+        <input type="text" id="search-date" class="search-input num" placeholder="20260601" maxlength="10" inputmode="numeric" aria-label="日付で検索"
+          oninput="onDateSearchInput()">
+        <button class="btn-search-clear" id="btn-date-clear" onclick="clearDateSearch()" style="display:none" aria-label="日付検索を消去">✕</button>
+      </div>
+    </div>
+    <!-- 訪問者名検索 -->
+    <div class="search-box">
+      <span class="ico" aria-hidden="true">👤</span>
+      <input type="text" id="search-name" class="search-input" placeholder="訪問者名で検索" aria-label="訪問者名で検索"
+        oninput="onNameSearchInput()" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="btn-search-clear" id="btn-name-clear" onclick="clearNameSearch()" style="display:none" aria-label="訪問者名検索を消去">✕</button>
+    </div>
+  </section>
+
+  <!-- ステータスフィルター -->
+  <div class="filter-btn-row" role="group" aria-label="状態で絞り込み">
+    <button id="btn-filter-all" class="btn-filter f-active" onclick="setStatusFilter('all')">すべて</button>
+    <button id="btn-filter-in" class="btn-filter" onclick="setStatusFilter('in')">● 入庫中</button>
+    <button id="btn-filter-out" class="btn-filter" onclick="setStatusFilter('out')">○ 出庫済み</button>
+  </div>
+
+  <div class="search-result-label" id="search-result-label" role="status"></div>
   <div class="record-list" id="record-list"></div>
-  <div class="empty-state" id="empty-state">まだ記録がありません</div>
-</div>
+  <div class="empty-state" id="empty-state"><span class="big" aria-hidden="true">🅿️</span>まだ記録がありません</div>
+</main>
 
 <!-- 編集モーダル -->
 <div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
-  <div class="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="edit-title">
     <div class="modal-title">
-      <span>記録を編集</span>
-      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+      <span id="edit-title">記録を編集</span>
+      <button class="modal-close" onclick="closeModalDirect()" aria-label="閉じる">✕</button>
     </div>
     <div class="modal-field">
-      <label>訪問者名（会社名）</label>
+      <label for="edit-plate">ナンバー（数字のみ）</label>
+      <input type="text" id="edit-plate" inputmode="numeric" maxlength="4" class="num">
+    </div>
+    <div class="modal-field">
+      <label for="edit-name">訪問者名（会社名）</label>
       <input type="text" id="edit-name">
     </div>
     <div class="modal-field">
-      <label>訪問先</label>
+      <label for="edit-dest">訪問先</label>
       <input type="text" id="edit-dest">
     </div>
-    <div class="modal-field">
-      <label>ナンバー（数字のみ）</label>
-      <input type="text" id="edit-plate" inputmode="numeric" maxlength="4">
+    <div class="modal-grid">
+      <div class="modal-field">
+        <label for="edit-intime">入庫時刻</label>
+        <input type="time" id="edit-intime">
+      </div>
+      <div class="modal-field">
+        <label for="edit-outtime">出庫時刻</label>
+        <input type="time" id="edit-outtime">
+      </div>
     </div>
-    <div class="modal-field">
-      <label>入庫時刻</label>
-      <input type="time" id="edit-intime">
-    </div>
-    <div class="modal-field">
-      <label>出庫時刻（未出庫は空欄）</label>
-      <input type="time" id="edit-outtime">
-    </div>
+    <div class="hint" style="margin-top:-6px">※ 未出庫の場合、出庫時刻は空欄にします</div>
     <div class="modal-actions">
-      <button class="btn-save" onclick="saveEdit()">保　存</button>
-      <button class="btn-delete" onclick="deleteRecord()">削　除</button>
+      <button class="btn-delete" onclick="deleteRecord()">削除</button>
+      <button class="btn-save" onclick="saveEdit()">保存</button>
     </div>
-    <button id="btn-revert" onclick="revertToParked()" style="display:none;width:100%;margin-top:12px;padding:20px;font-size:22px;font-weight:800;background:#e65100;color:#fff;border:3px solid #9a3800;border-radius:12px;cursor:pointer">↩️ 入庫中に戻す</button>
+    <button id="btn-revert" class="btn-revert" onclick="revertToParked()">↩ 入庫中に戻す</button>
   </div>
 </div>
 
 <!-- CSV出力モーダル -->
 <div class="csv-modal-overlay" id="csv-modal-overlay" onclick="closeCsvModalOutside(event)">
-  <div class="csv-modal">
-    <div class="csv-modal-title">📥 CSV出力　範囲を選択</div>
+  <div class="csv-modal" role="dialog" aria-modal="true" aria-label="CSV出力">
+    <div class="csv-modal-title">CSV出力 ― 範囲を選択</div>
     <div class="csv-btn-group">
-      <button class="btn-csv-opt btn-csv-today" onclick="doDownloadCSV('today')">📅　今日のデータ</button>
-      <button class="btn-csv-opt btn-csv-date" onclick="toggleDatePicker()">🗓️　日付を指定して出力</button>
+      <button class="btn-csv-opt btn-csv-today" onclick="doDownloadCSV('today')"><span class="opt-ico" aria-hidden="true">📅</span><span>今日のデータ<span class="opt-sub">本日分のみ出力</span></span></button>
+      <button class="btn-csv-opt btn-csv-date" onclick="toggleDatePicker()"><span class="opt-ico" aria-hidden="true">🗓️</span><span>日付を指定<span class="opt-sub">任意の1日分を出力</span></span></button>
       <div class="csv-date-row" id="csv-date-row">
-        <input type="date" id="csv-date-input" class="csv-date-input">
+        <input type="date" id="csv-date-input" class="csv-date-input" aria-label="出力する日付">
         <button class="btn-csv-do" onclick="doDownloadCSV('date')">この日のデータを出力</button>
       </div>
-      <button class="btn-csv-opt btn-csv-all" onclick="doDownloadCSV('all')">📋　全期間のデータ</button>
+      <button class="btn-csv-opt btn-csv-all" onclick="doDownloadCSV('all')"><span class="opt-ico" aria-hidden="true">📋</span><span>全期間のデータ<span class="opt-sub">保存されている全記録</span></span></button>
     </div>
     <button class="btn-csv-cancel" onclick="closeCsvModal()">キャンセル</button>
   </div>
@@ -297,23 +617,24 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
 
 <!-- CSV読み込みモーダル -->
 <div class="csv-modal-overlay" id="import-modal-overlay" onclick="closeImportModalOutside(event)">
-  <div class="csv-modal">
-    <div class="csv-modal-title">📂 CSV読み込み（上書き）</div>
+  <div class="csv-modal" role="dialog" aria-modal="true" aria-label="CSV読み込み">
+    <div class="csv-modal-title">CSV読み込み</div>
     <div class="csv-btn-group">
-      <div class="import-mode-row">
-        <label>読み込み方法を選択</label>
-        <select class="import-mode-select" id="import-mode">
-          <option value="overwrite">🔄 全データを上書き（置き換え）</option>
-          <option value="merge">➕ 既存データに追記（重複除外）</option>
-        </select>
+      <div class="import-mode-row" role="radiogroup" aria-label="読み込み方法">
+        <label>読み込み方法</label>
+        <div class="seg-options">
+          <label class="seg-option"><input type="radio" name="import-mode-radio" value="overwrite" checked onchange="document.getElementById('import-mode').value=this.value"><span>🔄 全データを上書き（置き換え）</span></label>
+          <label class="seg-option"><input type="radio" name="import-mode-radio" value="merge" onchange="document.getElementById('import-mode').value=this.value"><span>➕ 既存データに追記（重複除外）</span></label>
+        </div>
+        <input type="hidden" id="import-mode" value="overwrite">
       </div>
-      <div style="padding:10px 0 0">
-        <label style="font-size:19px;color:#333;font-weight:700;display:block;margin-bottom:10px">CSVファイルを選択</label>
+      <div style="padding-top:8px">
+        <div class="import-label">CSVファイル</div>
         <input type="file" id="csv-import-input" accept=".csv,text/csv" onchange="onCsvFileSelected(this)">
-        <button class="btn-import-do" onclick="document.getElementById('csv-import-input').click()">📁 ファイルを選ぶ</button>
-        <div id="import-file-name" style="margin-top:10px;font-size:17px;color:#333;text-align:center;font-weight:600"></div>
+        <button class="drop-zone" onclick="document.getElementById('csv-import-input').click()">📁 ファイルを選ぶ<small>.csv 形式</small></button>
+        <div id="import-file-name"></div>
       </div>
-      <button class="btn-import-do" id="btn-do-import" onclick="doImportCSV()" style="display:none;background:#27ae60">✅ 読み込みを実行</button>
+      <button class="btn-import-do" id="btn-do-import" onclick="doImportCSV()">読み込みを実行</button>
     </div>
     <button class="btn-csv-cancel" onclick="closeImportModal()">キャンセル</button>
   </div>
@@ -321,8 +642,8 @@ body{font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;background:#f0f
 
 <!-- 確認モーダル（ストレージ全削除） -->
 <div class="confirm-modal-overlay" id="confirm-modal-overlay">
-  <div class="confirm-modal">
-    <div class="confirm-modal-icon">⚠️</div>
+  <div class="confirm-modal" role="alertdialog" aria-modal="true" aria-describedby="confirm-modal-msg">
+    <div class="confirm-modal-icon" aria-hidden="true">⚠️</div>
     <div class="confirm-modal-msg" id="confirm-modal-msg">本当にすべてのデータを削除しますか？<br><b>この操作は元に戻せません。</b></div>
     <div class="confirm-modal-actions">
       <button class="btn-confirm-cancel" onclick="closeConfirmModal()">キャンセル</button>
@@ -337,6 +658,7 @@ let records=[];
 let editingId=null;
 let statusFilter='all';
 let autofillTimer=null;
+let toastTimer=null;
 
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 
@@ -378,7 +700,12 @@ records=loadRecords();
 function showView(v){
   document.getElementById('entry-view').style.display=v==='entry'?'block':'none';
   document.getElementById('list-view').style.display=v==='list'?'block':'none';
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(v==='entry'&&i===0)||(v==='list'&&i===1)));
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
+    const on=(v==='entry'&&i===0)||(v==='list'&&i===1);
+    b.classList.toggle('active',on);
+    b.setAttribute('aria-selected',on);
+  });
+  window.scrollTo({top:0});
   if(v==='list'){
     const di=document.getElementById('search-date');
     if(!di.value){di.value=today();document.getElementById('btn-date-clear').style.display='inline-block';}
@@ -388,8 +715,10 @@ function showView(v){
 
 function toast(msg){
   const t=document.getElementById('toast');
-  t.textContent=msg;t.style.display='block';
-  setTimeout(()=>t.style.display='none',2500);
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2500);
 }
 
 function now(){
@@ -405,6 +734,26 @@ function todayJP(){
   return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日（'+['日','月','火','水','木','金','土'][d.getDay()]+'）';
 }
 
+// ===== 滞在時間 =====
+function toMin(t){const m=/^(\d{1,2}):(\d{2})$/.exec(t||'');return m?(+m[1])*60+(+m[2]):null;}
+function stayText(r){
+  const a=toMin(r.inTime);
+  if(a===null)return '';
+  let b;
+  if(r.outTime)b=toMin(r.outTime);
+  else if(r.date===today()){const d=new Date();b=d.getHours()*60+d.getMinutes();}
+  else return '';
+  if(b===null||b<a)return '';
+  const m=b-a,h=Math.floor(m/60);
+  return (r.outTime?'滞在 ':'経過 ')+(h?h+'時間':'')+(m%60)+'分';
+}
+
+// ===== ヘッダー時計 =====
+function tickClock(){
+  document.getElementById('header-clock').textContent=now();
+  document.getElementById('header-date').textContent=todayJP();
+}
+
 function register(){
   const name=document.getElementById('visitor-name').value.trim();
   const dest=document.getElementById('destination').value.trim();
@@ -417,18 +766,24 @@ function register(){
   document.activeElement.blur();
   records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name:finalName,dest:finalDest,plate});
   saveRecords();
-  document.getElementById('visitor-name').value='';
-  document.getElementById('destination').value='';
-  document.getElementById('plate-number').value='';
+  ['visitor-name','destination','plate-number'].forEach(id=>{const el=document.getElementById(id);el.value='';toggleClearBtn(el);});
+  showSuccess('✅ 入庫登録が完了しました！');
+}
+
+function showSuccess(text){
   const msg=document.getElementById('success-msg');
+  msg.textContent=text;
+  msg.style.display='none';
+  void msg.offsetWidth; // アニメーション再生のためリフロー
   msg.style.display='block';
-  setTimeout(()=>msg.style.display='none',3000);
+  clearTimeout(msg._t);
+  msg._t=setTimeout(()=>msg.style.display='none',3000);
 }
 
 function checkout(id,e){
   e.stopPropagation();
   const r=records.find(r=>r.id===id);
-  if(r){r.outTime=now();saveRecords();}
+  if(r){r.outTime=now();saveRecords();toast('🚗 '+r.plate+' を出庫しました');}
   renderList();
 }
 
@@ -521,19 +876,12 @@ function autofillFromPlate(){
     const latest=[...matched].sort((a,b)=>(b.date+'T'+b.inTime).localeCompare(a.date+'T'+a.inTime))[0];
     const autoName=(latest.name&&latest.name!=='不明')?latest.name:'不明';
     const autoDest=latest.dest||'不明';
-    document.getElementById('visitor-name').value=autoName!=='不明'?autoName:'';
-    document.getElementById('destination').value=autoDest!=='不明'?autoDest:'';
 
     document.activeElement.blur();
     records.push({id:Date.now(),date:today(),inTime:now(),outTime:null,name:autoName,dest:autoDest,plate});
     saveRecords();
-    document.getElementById('visitor-name').value='';
-    document.getElementById('destination').value='';
-    document.getElementById('plate-number').value='';
-    const msg=document.getElementById('success-msg');
-    msg.textContent='✅ 過去データから自動入庫しました（'+autoName+'）';
-    msg.style.display='block';
-    setTimeout(()=>{msg.style.display='none';msg.textContent='✅ 入庫登録が完了しました！';},3000);
+    ['visitor-name','destination','plate-number'].forEach(id=>{const el=document.getElementById(id);el.value='';toggleClearBtn(el);});
+    showSuccess('✅ 過去データから自動入庫しました（'+autoName+'）');
   },1000);
 }
 
@@ -674,20 +1022,27 @@ function renderList(){
   if(!filtered.length){list.innerHTML='';empty.style.display='block';return;}
   empty.style.display='none';
   const showDate=hasAnyFilter&&!isDefaultView;
-  list.innerHTML=filtered.map(r=>`
-    <div class="record-card${showDate?' search-match':''}" ontouchstart="touchStart(event)" ontouchend="touchEnd(event,${r.id})" onclick="openEdit(${r.id})" style="-webkit-tap-highlight-color:rgba(26,86,160,0.15);cursor:pointer">
+  list.innerHTML=filtered.map((r,i)=>{
+    const stay=stayText(r);
+    return `
+    <div class="record-card${r.outTime?' is-out':''}${showDate?' search-match':''}" style="animation-delay:${Math.min(i,10)*25}ms" role="button" tabindex="0"
+      ontouchstart="touchStart(event)" ontouchend="touchEnd(event,${r.id})" onclick="openEdit(${r.id})" onkeydown="if(event.key==='Enter')openEdit(${r.id})">
       <div class="record-card-top">
         <span class="record-name">${esc(r.name)}</span>
-        <span class="plate-num">${r.plate}</span>
+        <span class="plate-num">${esc(r.plate)}</span>
       </div>
-      <div class="record-card-mid">訪問先：${esc(r.dest)||'—'}${showDate?' ／ 📅 '+r.date:''}</div>
+      <div class="record-card-mid"><span>📍 ${esc(r.dest)||'—'}</span>${showDate?'<span class="num">📅 '+esc(r.date)+'</span>':''}</div>
       <div class="record-card-bot">
-        <span class="time-info">入庫 ${r.inTime}${r.outTime?' ／ 出庫 '+r.outTime:''}</span>
+        <div class="time-info">
+          <div class="time-block"><span class="t-label">入庫</span><span class="t-val">${esc(r.inTime)}</span></div>
+          ${r.outTime?`<span class="time-arrow" aria-hidden="true">→</span><div class="time-block"><span class="t-label">出庫</span><span class="t-val">${esc(r.outTime)}</span></div>`:''}
+          ${stay?`<span class="stay">${stay}</span>`:''}
+        </div>
         ${r.outTime
-          ?'<span class="badge-out">出庫済み</span>'
-          :`<button class="btn-checkout" onclick="event.stopPropagation();checkout(${r.id},event)" ontouchend="event.stopPropagation();checkout(${r.id},event)">出　庫</button>`}
+          ?'<span class="badge-out">○ 出庫済み</span>'
+          :`<button class="btn-checkout" onclick="event.stopPropagation();checkout(${r.id},event)" ontouchend="event.stopPropagation();checkout(${r.id},event)">出庫</button>`}
       </div>
-    </div>`).join('');
+    </div>`;}).join('');
 }
 
 function openCsvModal(){
@@ -723,7 +1078,7 @@ function doDownloadCSV(mode){
     label='全期間';
   }
   if(!filtered.length){toast('該当するデータがありません');closeCsvModal();return;}
-  const bom='\uFEFF';
+  const bom='﻿';
   const header='日付,入庫時刻,出庫時刻,訪問者名,訪問先,ナンバー\n';
   const rows=filtered.map(r=>[r.date,r.inTime,r.outTime||'','"'+r.name+'"','"'+(r.dest||'')+'"',r.plate].join(',')).join('\n');
   const csv=bom+header+rows;
@@ -841,6 +1196,23 @@ function doImportCSV(){
   reader.readAsText(importFile,'UTF-8');
 }
 
+// Escキーで開いているモーダルを閉じる
+document.addEventListener('keydown',e=>{
+  if(e.key!=='Escape')return;
+  if(document.getElementById('confirm-modal-overlay').classList.contains('open'))closeConfirmModal();
+  else if(document.getElementById('import-modal-overlay').classList.contains('open'))closeImportModal();
+  else if(document.getElementById('csv-modal-overlay').classList.contains('open'))closeCsvModal();
+  else if(document.getElementById('modal-overlay').classList.contains('open'))closeModalDirect();
+});
+
+// 1分ごとに時計と経過時間を更新（モーダル表示中は一覧を再描画しない）
+setInterval(()=>{
+  tickClock();
+  const listVisible=document.getElementById('list-view').style.display!=='none';
+  if(listVisible&&!document.querySelector('.modal-overlay.open,.csv-modal-overlay.open,.confirm-modal-overlay.open'))renderList();
+},30000);
+
+tickClock();
 document.getElementById('search-date').value=today();
 document.getElementById('btn-date-clear').style.display='inline-block';
 renderList();
